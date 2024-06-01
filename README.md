@@ -1,5 +1,5 @@
-# :page_facing_up: VPTTA
-This is the official pytorch implementation of our CVPR 2024 paper "[Each Test Image Deserves A Specific Prompt: Continual Test-Time Adaptation for 2D Medical Image Segmentation](https://arxiv.org/pdf/2311.18363.pdf)".
+# :page_facing_up: 眼底图像分类
+
 
 <div align="center">
   <img width="100%" alt="VPTTA Illustration" src="github/Overview.jpg">
@@ -7,24 +7,27 @@ This is the official pytorch implementation of our CVPR 2024 paper "[Each Test I
 
 ## Environment
 ```
-CUDA 10.1
-Python 3.7.0
-Pytorch 1.8.0
-CuDNN 8.0.5
+环境的配置和以下仓库相同：
+https://github.com/shiyegao/DDA
 ```
-Our Anaconda environment is also available for download from [Google Drive](https://drive.google.com/file/d/1vAEyFrJ_wLiLwNJfBTg6J-wC9CbzCLmn/view?usp=sharing).<br />
-
-Upon decompression, please move ```czy_pytorch``` to ```your_root/anaconda3/envs/```. Then the environment can be activated by ```conda activate czy_pytorch```.
 
 ## Data Preparation
-The preprocessed data can be downloaded from [Google Drive](https://drive.google.com/drive/folders/1axgu3-65un-wA_1OH-tQIUIEHEDrnS_-?usp=drive_link).
+这里的预处理是对眼底图像做了中心裁剪到800*800
+把数据放在根目录下，数据集的组织形式为   根目录/数据集名称/train or test/image/xxx.png or jpg
 
 ## Pre-trained Models
-The pre-trained models can be downloaded from [Google Drive](https://drive.google.com/drive/folders/1WWRbFLN3ELGbNs9jnl5bt4bIHuha8jWw?usp=drive_link).<br />
+这里需要去预训练一个在源域上的diffusion，训练源域diffusion与guided diffusion仓库一样：
+https://github.com/openai/guided-diffusion
+这里环境需要多加几个包。同时记得看train_util文件当中的训练逻辑，需要在脚本文件image_train中设置lr_anneal_steps来指明训练的iteration，我这里设置的是100000，大概在4卡4090上跑12 h（这里首先让diffusion加载了256*256 uncond的预训练文件）
+    model, diffusion = create_model_and_diffusion(
+        **args_to_dict(args, model_and_diffusion_defaults().keys())
+    )
+    #model.to(dist_util.dev())
+    model.load_state_dict(torch.load('/home/liumingsi/guided-diffusion/ckpt/256x256_diffusion_uncond.pt', map_location=dist_util.dev()))
+    logger.log("load pretrained ckpt successfully!")
+    model.to(dist_util.dev())
 
-You can also train your own models from scratch following:
-
-* **OD/OC Segmentation**
+* **分类任务**
 ```
 CUDA_VISIBLE_DEVICES=0 python OPTIC/train_source.py --Source_Dataset RIM_ONE_r3 --path_save_log OPTIC/logs --path_save_model OPTIC/models --dataset_root your_dataset_root
 ```
