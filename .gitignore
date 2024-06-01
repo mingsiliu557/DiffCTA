@@ -1,0 +1,16 @@
+# 忽略特定大文件
+OPTIC/models/Drishti_GS/last-Res_Unet.pth
+OPTIC/models/ORIGA/last-Res_Unet.pth
+OPTIC/models/REFUGE/last-Res_Unet.pth
+OPTIC/models/REFUGE_Valid/last-Res_Unet.pth
+OPTIC/models/RIM_ONE_r3/last-Res_Unet.pth
+OPTIC/models/models.zip
+
+# 忽略所有大于100MB的文件
+*.pth
+*.zip
+*.jpg
+*.png
+*.JPG
+*.PNG
+*.pt
