@@ -1,0 +1,80 @@
+Source Train Dataset:  ['Drishti_GS_train.csv', 'Drishti_GS_test.csv'] 98
+Source_Dataset: Drishti_GS
+num_workers: 0
+image_size: 256
+backbone: resnet50
+in_ch: 3
+out_ch: 2
+optimizer: Adam
+lr_scheduler: ReduceLR
+lr: 0.0003
+weight_decay: 0.0005
+momentum: 0.99
+beta1: 0.9
+beta2: 0.99
+num_epochs: 100
+batch_size: 4
+lossmap: ['ce']
+path_save_log: OPTIC/logs
+path_save_model: OPTIC/models
+dataset_root: /home/lmx/VPTTA/Data
+device: cuda:0
+The number of total parameters: 23512130
+************************************************************
+Epoch:1/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.79679938
+Train Metrics Mean:  {'Acc': 0.6}
+**************************************************
+Epoch:2/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.68260030
+Train Metrics Mean:  {'Acc': 0.635}
+**************************************************
+Epoch:3/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.68301232
+Train Metrics Mean:  {'Acc': 0.64666665}
+**************************************************
+Epoch:4/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.62401714
+Train Metrics Mean:  {'Acc': 0.6525}
+**************************************************
+Epoch:5/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.48286364
+Train Metrics Mean:  {'Acc': 0.678}
+**************************************************
+Epoch:6/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.54857861
+Train Metrics Mean:  {'Acc': 0.69}
+**************************************************
+Epoch:7/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.48661753
+Train Metrics Mean:  {'Acc': 0.70857143}
+**************************************************
+Epoch:8/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.43464109
+Train Metrics Mean:  {'Acc': 0.71375}
+**************************************************
+Epoch:9/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.48338747
+Train Metrics Mean:  {'Acc': 0.7222222}
+**************************************************
+Epoch:10/100
+Source Pretraining...
+Learning rate: 0.0003

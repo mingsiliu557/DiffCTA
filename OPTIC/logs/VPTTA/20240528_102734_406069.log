@@ -1,0 +1,26 @@
+Source_Dataset: Retina
+Target_Dataset: ['RIM_ONE_r3', 'REFUGE', 'Drishti_GS', 'ORIGA']
+num_workers: 8
+image_size: 256
+backbone: resnet50
+in_ch: 3
+out_ch: 2
+optimizer: Adam
+lr: 0.05
+momentum: 0.99
+beta1: 0.9
+beta2: 0.99
+weight_decay: 0.0
+batch_size: 1
+iters: 1
+memory_size: 40
+neighbor: 16
+prompt_alpha: 0.01
+warm_n: 5
+path_save_log: /home/lmx/VPTTA/OPTIC/logs/
+model_root: /home/lmx/VPTTA/OPTIC/models/
+dataset_root: /home/lmx/VPTTA/Data
+generate_root: /home/lmx/VPTTA/generated
+device: cuda:0
+************************************************************
+Test Metrics:  {'Acc': 0.68094873}

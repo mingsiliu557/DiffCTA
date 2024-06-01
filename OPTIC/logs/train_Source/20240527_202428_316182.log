@@ -1,0 +1,633 @@
+Source Train Dataset:  ['REFUGE_train.csv', 'REFUGE_test.csv'] 400
+Source_Dataset: REFUGE
+num_workers: 0
+image_size: 256
+backbone: resnet50
+in_ch: 3
+out_ch: 2
+optimizer: Adam
+lr_scheduler: ReduceLR
+lr: 0.0003
+weight_decay: 0.0005
+momentum: 0.99
+beta1: 0.9
+beta2: 0.99
+num_epochs: 100
+batch_size: 4
+lossmap: ['ce']
+path_save_log: OPTIC/logs
+path_save_model: OPTIC/models
+dataset_root: /home/lmx/VPTTA/Data
+device: cuda:0
+The number of total parameters: 23512130
+************************************************************
+Epoch:1/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.32271154
+Train Metrics Mean:  {'Acc': 0.905}
+**************************************************
+Epoch:2/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.29895211
+Train Metrics Mean:  {'Acc': 0.89875}
+**************************************************
+Epoch:3/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.25315140
+Train Metrics Mean:  {'Acc': 0.90833336}
+**************************************************
+Epoch:4/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.24956235
+Train Metrics Mean:  {'Acc': 0.913125}
+**************************************************
+Epoch:5/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.23772815
+Train Metrics Mean:  {'Acc': 0.9125}
+**************************************************
+Epoch:6/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.24017250
+Train Metrics Mean:  {'Acc': 0.91333336}
+**************************************************
+Epoch:7/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.19076241
+Train Metrics Mean:  {'Acc': 0.91714287}
+**************************************************
+Epoch:8/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.19167290
+Train Metrics Mean:  {'Acc': 0.9190625}
+**************************************************
+Epoch:9/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.18314911
+Train Metrics Mean:  {'Acc': 0.92}
+**************************************************
+Epoch:10/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.20737466
+Train Metrics Mean:  {'Acc': 0.92075}
+**************************************************
+Epoch:11/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.15986117
+Train Metrics Mean:  {'Acc': 0.92318183}
+**************************************************
+Epoch:12/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.16020562
+Train Metrics Mean:  {'Acc': 0.9247917}
+**************************************************
+Epoch:13/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.14678992
+Train Metrics Mean:  {'Acc': 0.9269231}
+**************************************************
+Epoch:14/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.12820301
+Train Metrics Mean:  {'Acc': 0.9294643}
+**************************************************
+Epoch:15/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.11451653
+Train Metrics Mean:  {'Acc': 0.93133336}
+**************************************************
+Epoch:16/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.12351152
+Train Metrics Mean:  {'Acc': 0.93296874}
+**************************************************
+Epoch:17/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.14757401
+Train Metrics Mean:  {'Acc': 0.9332353}
+**************************************************
+Epoch:18/100
+Source Pretraining...
+Learning rate: 0.0003
+Train source: Total Loss:0.12155791
+Train Metrics Mean:  {'Acc': 0.93430555}
+**************************************************
+Epoch:19/100
+Source Pretraining...
+Learning rate: 0.0003
+Epoch 00019: reducing learning rate of group 0 to 9.0000e-05.
+Train source: Total Loss:0.14063178
+Train Metrics Mean:  {'Acc': 0.93473685}
+**************************************************
+Epoch:20/100
+Source Pretraining...
+Learning rate: 8.999999999999999e-05
+Train source: Total Loss:0.09956220
+Train Metrics Mean:  {'Acc': 0.93625}
+**************************************************
+Epoch:21/100
+Source Pretraining...
+Learning rate: 8.999999999999999e-05
+Train source: Total Loss:0.09113423
+Train Metrics Mean:  {'Acc': 0.9380952}
+**************************************************
+Epoch:22/100
+Source Pretraining...
+Learning rate: 8.999999999999999e-05
+Train source: Total Loss:0.08885273
+Train Metrics Mean:  {'Acc': 0.9396591}
+**************************************************
+Epoch:23/100
+Source Pretraining...
+Learning rate: 8.999999999999999e-05
+Train source: Total Loss:0.03505571
+Train Metrics Mean:  {'Acc': 0.94152176}
+**************************************************
+Epoch:24/100
+Source Pretraining...
+Learning rate: 8.999999999999999e-05
+Train source: Total Loss:0.04727790
+Train Metrics Mean:  {'Acc': 0.94322914}
+**************************************************
+Epoch:25/100
+Source Pretraining...
+Learning rate: 8.999999999999999e-05
+Train source: Total Loss:0.05804025
+Train Metrics Mean:  {'Acc': 0.9446}
+**************************************************
+Epoch:26/100
+Source Pretraining...
+Learning rate: 8.999999999999999e-05
+Train source: Total Loss:0.03877269
+Train Metrics Mean:  {'Acc': 0.94625}
+**************************************************
+Epoch:27/100
+Source Pretraining...
+Learning rate: 8.999999999999999e-05
+Epoch 00027: reducing learning rate of group 0 to 2.7000e-05.
+Train source: Total Loss:0.04749309
+Train Metrics Mean:  {'Acc': 0.9475}
+**************************************************
+Epoch:28/100
+Source Pretraining...
+Learning rate: 2.6999999999999996e-05
+Train source: Total Loss:0.04766346
+Train Metrics Mean:  {'Acc': 0.9488393}
+**************************************************
+Epoch:29/100
+Source Pretraining...
+Learning rate: 2.6999999999999996e-05
+Train source: Total Loss:0.04521756
+Train Metrics Mean:  {'Acc': 0.95008624}
+**************************************************
+Epoch:30/100
+Source Pretraining...
+Learning rate: 2.6999999999999996e-05
+Train source: Total Loss:0.05061170
+Train Metrics Mean:  {'Acc': 0.95133334}
+**************************************************
+Epoch:31/100
+Source Pretraining...
+Learning rate: 2.6999999999999996e-05
+Epoch 00031: reducing learning rate of group 0 to 8.1000e-06.
+Train source: Total Loss:0.10375315
+Train Metrics Mean:  {'Acc': 0.95209676}
+**************************************************
+Epoch:32/100
+Source Pretraining...
+Learning rate: 8.099999999999999e-06
+Train source: Total Loss:0.02056747
+Train Metrics Mean:  {'Acc': 0.95351565}
+**************************************************
+Epoch:33/100
+Source Pretraining...
+Learning rate: 8.099999999999999e-06
+Train source: Total Loss:0.04643991
+Train Metrics Mean:  {'Acc': 0.9543939}
+**************************************************
+Epoch:34/100
+Source Pretraining...
+Learning rate: 8.099999999999999e-06
+Train source: Total Loss:0.02113546
+Train Metrics Mean:  {'Acc': 0.9555882}
+**************************************************
+Epoch:35/100
+Source Pretraining...
+Learning rate: 8.099999999999999e-06
+Train source: Total Loss:0.03694051
+Train Metrics Mean:  {'Acc': 0.95664287}
+**************************************************
+Epoch:36/100
+Source Pretraining...
+Learning rate: 8.099999999999999e-06
+Epoch 00036: reducing learning rate of group 0 to 2.4300e-06.
+Train source: Total Loss:0.02283764
+Train Metrics Mean:  {'Acc': 0.95763886}
+**************************************************
+Epoch:37/100
+Source Pretraining...
+Learning rate: 2.4299999999999996e-06
+Train source: Total Loss:0.02591338
+Train Metrics Mean:  {'Acc': 0.9585811}
+**************************************************
+Epoch:38/100
+Source Pretraining...
+Learning rate: 2.4299999999999996e-06
+Train source: Total Loss:0.04302270
+Train Metrics Mean:  {'Acc': 0.95940787}
+**************************************************
+Epoch:39/100
+Source Pretraining...
+Learning rate: 2.4299999999999996e-06
+Train source: Total Loss:0.04151671
+Train Metrics Mean:  {'Acc': 0.9601923}
+**************************************************
+Epoch:40/100
+Source Pretraining...
+Learning rate: 2.4299999999999996e-06
+Train source: Total Loss:0.01676994
+Train Metrics Mean:  {'Acc': 0.961125}
+**************************************************
+Epoch:41/100
+Source Pretraining...
+Learning rate: 2.4299999999999996e-06
+Train source: Total Loss:0.02163526
+Train Metrics Mean:  {'Acc': 0.96182925}
+**************************************************
+Epoch:42/100
+Source Pretraining...
+Learning rate: 2.4299999999999996e-06
+Train source: Total Loss:0.06074042
+Train Metrics Mean:  {'Acc': 0.9625}
+**************************************************
+Epoch:43/100
+Source Pretraining...
+Learning rate: 2.4299999999999996e-06
+Train source: Total Loss:0.02805814
+Train Metrics Mean:  {'Acc': 0.96319765}
+**************************************************
+Epoch:44/100
+Source Pretraining...
+Learning rate: 2.4299999999999996e-06
+Epoch 00044: reducing learning rate of group 0 to 7.2900e-07.
+Train source: Total Loss:0.03016635
+Train Metrics Mean:  {'Acc': 0.9638068}
+**************************************************
+Epoch:45/100
+Source Pretraining...
+Learning rate: 7.289999999999998e-07
+Train source: Total Loss:0.02395774
+Train Metrics Mean:  {'Acc': 0.96433336}
+**************************************************
+Epoch:46/100
+Source Pretraining...
+Learning rate: 7.289999999999998e-07
+Train source: Total Loss:0.01858754
+Train Metrics Mean:  {'Acc': 0.965}
+**************************************************
+Epoch:47/100
+Source Pretraining...
+Learning rate: 7.289999999999998e-07
+Train source: Total Loss:0.03403864
+Train Metrics Mean:  {'Acc': 0.9654787}
+**************************************************
+Epoch:48/100
+Source Pretraining...
+Learning rate: 7.289999999999998e-07
+Epoch 00048: reducing learning rate of group 0 to 2.1870e-07.
+Train source: Total Loss:0.02776117
+Train Metrics Mean:  {'Acc': 0.9659375}
+**************************************************
+Epoch:49/100
+Source Pretraining...
+Learning rate: 2.1869999999999994e-07
+Train source: Total Loss:0.02474876
+Train Metrics Mean:  {'Acc': 0.96632653}
+**************************************************
+Epoch:50/100
+Source Pretraining...
+Learning rate: 2.1869999999999994e-07
+Train source: Total Loss:0.03032438
+Train Metrics Mean:  {'Acc': 0.96685}
+**************************************************
+Epoch:51/100
+Source Pretraining...
+Learning rate: 2.1869999999999994e-07
+Train source: Total Loss:0.02751244
+Train Metrics Mean:  {'Acc': 0.9673529}
+**************************************************
+Epoch:52/100
+Source Pretraining...
+Learning rate: 2.1869999999999994e-07
+Train source: Total Loss:0.01291541
+Train Metrics Mean:  {'Acc': 0.96798074}
+**************************************************
+Epoch:53/100
+Source Pretraining...
+Learning rate: 2.1869999999999994e-07
+Train source: Total Loss:0.02349617
+Train Metrics Mean:  {'Acc': 0.96839625}
+**************************************************
+Epoch:54/100
+Source Pretraining...
+Learning rate: 2.1869999999999994e-07
+Train source: Total Loss:0.01986411
+Train Metrics Mean:  {'Acc': 0.96884257}
+**************************************************
+Epoch:55/100
+Source Pretraining...
+Learning rate: 2.1869999999999994e-07
+Train source: Total Loss:0.01239480
+Train Metrics Mean:  {'Acc': 0.96936363}
+**************************************************
+Epoch:56/100
+Source Pretraining...
+Learning rate: 2.1869999999999994e-07
+Train source: Total Loss:0.03190507
+Train Metrics Mean:  {'Acc': 0.9697768}
+**************************************************
+Epoch:57/100
+Source Pretraining...
+Learning rate: 2.1869999999999994e-07
+Train source: Total Loss:0.02278199
+Train Metrics Mean:  {'Acc': 0.9702632}
+**************************************************
+Epoch:58/100
+Source Pretraining...
+Learning rate: 2.1869999999999994e-07
+Train source: Total Loss:0.03451254
+Train Metrics Mean:  {'Acc': 0.9705604}
+**************************************************
+Epoch:59/100
+Source Pretraining...
+Learning rate: 2.1869999999999994e-07
+Epoch 00059: reducing learning rate of group 0 to 6.5610e-08.
+Train source: Total Loss:0.01945539
+Train Metrics Mean:  {'Acc': 0.97097456}
+**************************************************
+Epoch:60/100
+Source Pretraining...
+Learning rate: 6.560999999999998e-08
+Train source: Total Loss:0.03037630
+Train Metrics Mean:  {'Acc': 0.97129166}
+**************************************************
+Epoch:61/100
+Source Pretraining...
+Learning rate: 6.560999999999998e-08
+Train source: Total Loss:0.07562184
+Train Metrics Mean:  {'Acc': 0.9715574}
+**************************************************
+Epoch:62/100
+Source Pretraining...
+Learning rate: 6.560999999999998e-08
+Train source: Total Loss:0.01397011
+Train Metrics Mean:  {'Acc': 0.9719758}
+**************************************************
+Epoch:63/100
+Source Pretraining...
+Learning rate: 6.560999999999998e-08
+Epoch 00063: reducing learning rate of group 0 to 1.9683e-08.
+Train source: Total Loss:0.02723329
+Train Metrics Mean:  {'Acc': 0.9722619}
+**************************************************
+Epoch:64/100
+Source Pretraining...
+Learning rate: 1.9682999999999992e-08
+Train source: Total Loss:0.01216730
+Train Metrics Mean:  {'Acc': 0.97265625}
+**************************************************
+Epoch:65/100
+Source Pretraining...
+Learning rate: 1.9682999999999992e-08
+Train source: Total Loss:0.01872996
+Train Metrics Mean:  {'Acc': 0.97296154}
+**************************************************
+Epoch:66/100
+Source Pretraining...
+Learning rate: 1.9682999999999992e-08
+Train source: Total Loss:0.01782398
+Train Metrics Mean:  {'Acc': 0.97329545}
+**************************************************
+Epoch:67/100
+Source Pretraining...
+Learning rate: 1.9682999999999992e-08
+Train source: Total Loss:0.02728110
+Train Metrics Mean:  {'Acc': 0.9735448}
+**************************************************
+Epoch:68/100
+Source Pretraining...
+Learning rate: 1.9682999999999992e-08
+Epoch 00068: reducing learning rate of group 0 to 5.9049e-09.
+Train source: Total Loss:0.04235716
+Train Metrics Mean:  {'Acc': 0.9737132}
+**************************************************
+Epoch:69/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.02445804
+Train Metrics Mean:  {'Acc': 0.97394925}
+**************************************************
+Epoch:70/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.02160845
+Train Metrics Mean:  {'Acc': 0.9742857}
+**************************************************
+Epoch:71/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.01429883
+Train Metrics Mean:  {'Acc': 0.97461265}
+**************************************************
+Epoch:72/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.02266930
+Train Metrics Mean:  {'Acc': 0.9748611}
+**************************************************
+Epoch:73/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.01561717
+Train Metrics Mean:  {'Acc': 0.975137}
+**************************************************
+Epoch:74/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.02581647
+Train Metrics Mean:  {'Acc': 0.9753716}
+**************************************************
+Epoch:75/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.01990576
+Train Metrics Mean:  {'Acc': 0.9756333}
+**************************************************
+Epoch:76/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.01982101
+Train Metrics Mean:  {'Acc': 0.97592103}
+**************************************************
+Epoch:77/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.02510350
+Train Metrics Mean:  {'Acc': 0.9761688}
+**************************************************
+Epoch:78/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.01922037
+Train Metrics Mean:  {'Acc': 0.9763782}
+**************************************************
+Epoch:79/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.02977544
+Train Metrics Mean:  {'Acc': 0.97648734}
+**************************************************
+Epoch:80/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.01537519
+Train Metrics Mean:  {'Acc': 0.9767187}
+**************************************************
+Epoch:81/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.06086893
+Train Metrics Mean:  {'Acc': 0.9768519}
+**************************************************
+Epoch:82/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.01554260
+Train Metrics Mean:  {'Acc': 0.97710365}
+**************************************************
+Epoch:83/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.01904699
+Train Metrics Mean:  {'Acc': 0.9773193}
+**************************************************
+Epoch:84/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.03036324
+Train Metrics Mean:  {'Acc': 0.97752976}
+**************************************************
+Epoch:85/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.04382366
+Train Metrics Mean:  {'Acc': 0.9777059}
+**************************************************
+Epoch:86/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.04402559
+Train Metrics Mean:  {'Acc': 0.9777907}
+**************************************************
+Epoch:87/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.01757370
+Train Metrics Mean:  {'Acc': 0.9779885}
+**************************************************
+Epoch:88/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.01817059
+Train Metrics Mean:  {'Acc': 0.9782102}
+**************************************************
+Epoch:89/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.02162085
+Train Metrics Mean:  {'Acc': 0.9783708}
+**************************************************
+Epoch:90/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.02454603
+Train Metrics Mean:  {'Acc': 0.97858334}
+**************************************************
+Epoch:91/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.01883791
+Train Metrics Mean:  {'Acc': 0.9787363}
+**************************************************
+Epoch:92/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.01027077
+Train Metrics Mean:  {'Acc': 0.9789402}
+**************************************************
+Epoch:93/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.03353520
+Train Metrics Mean:  {'Acc': 0.9790054}
+**************************************************
+Epoch:94/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.03525566
+Train Metrics Mean:  {'Acc': 0.97909576}
+**************************************************
+Epoch:95/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.04258860
+Train Metrics Mean:  {'Acc': 0.97915787}
+**************************************************
+Epoch:96/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.01443779
+Train Metrics Mean:  {'Acc': 0.97934896}
+**************************************************
+Epoch:97/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.01529034
+Train Metrics Mean:  {'Acc': 0.97953606}
+**************************************************
+Epoch:98/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.02324287
+Train Metrics Mean:  {'Acc': 0.97964287}
+**************************************************
+Epoch:99/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.02941162
+Train Metrics Mean:  {'Acc': 0.97977275}
+**************************************************
+Epoch:100/100
+Source Pretraining...
+Learning rate: 5.904899999999998e-09
+Train source: Total Loss:0.02915421
+Train Metrics Mean:  {'Acc': 0.9799}
+**************************************************
+The best total loss:0.010270770317874848 epoch:92
