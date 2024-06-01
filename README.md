@@ -2,7 +2,7 @@
 
 
 <div align="center">
-  <img width="100%" alt="VPTTA Illustration" src="github/Overview.jpg">
+  
 </div>
 
 ## Environment
@@ -19,6 +19,8 @@ https://github.com/shiyegao/DDA
 这里需要去预训练一个在源域上的diffusion，训练源域diffusion与guided diffusion仓库一样：
 https://github.com/openai/guided-diffusion
 这里环境需要多加几个包。同时记得看train_util文件当中的训练逻辑，需要在脚本文件image_train中设置lr_anneal_steps来指明训练的iteration，我这里设置的是100000，大概在4卡4090上跑12 h（这里首先让diffusion加载了256*256 uncond的预训练文件）
+    
+    
     model, diffusion = create_model_and_diffusion(
         **args_to_dict(args, model_and_diffusion_defaults().keys())
     )
@@ -27,13 +29,12 @@ https://github.com/openai/guided-diffusion
     logger.log("load pretrained ckpt successfully!")
     model.to(dist_util.dev())
 
+
+
 * **分类任务**
 ```
 CUDA_VISIBLE_DEVICES=0 python OPTIC/train_source.py --Source_Dataset RIM_ONE_r3 --path_save_log OPTIC/logs --path_save_model OPTIC/models --dataset_root your_dataset_root
 ```
-* **Polyp Segmentation**
-
-Please refer to the Pytorch implementation of [PraNet](https://github.com/DengPingFan/PraNet).
 
 ## How to Run
 Please first modify the root in ```VPTTA_OPTIC.sh``` , and then run the following command to reproduce the results.
