@@ -15,7 +15,13 @@ https://github.com/shiyegao/DDA
 这里的预处理是对眼底图像做了中心裁剪到800*800
 把数据放在根目录下，数据集的组织形式为   根目录/数据集名称/train or test/image/xxx.png or jpg
 
+链接：https://pan.baidu.com/s/1perPGwjWwbqoTHerdFt7aQ?pwd=10v1 
+提取码：10v1 
+--来自百度网盘超级会员V5的分享
+
 ## Pre-trained Models
+
+* **训练源域diffusion模型**
 这里需要去预训练一个在源域上的diffusion，训练源域diffusion与guided diffusion仓库一样：
 https://github.com/openai/guided-diffusion
 这里环境需要多加几个包。同时记得看train_util文件当中的训练逻辑，需要在脚本文件image_train中设置lr_anneal_steps来指明训练的iteration，我这里设置的是100000，大概在4卡4090上跑12 h（这里首先让diffusion加载了256*256 uncond的预训练文件）
