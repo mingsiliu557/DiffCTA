@@ -1,6 +1,6 @@
 import argparse
 import os
-
+import random
 import blobfile as bf
 import numpy as np
 import torch as th
@@ -17,6 +17,15 @@ from image_adapt.guided_diffusion.image_datasets import load_data, ImageDataset
 from torchvision import utils
 import math
 from torch.nn.parallel.distributed import DistributedDataParallel as DDP
+
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    th.manual_seed(seed)
+    th.cuda.manual_seed(seed)
+    th.cuda.manual_seed_all(seed)  # if you are using multi-GPU.
+    th.backends.cudnn.deterministic = True
+    th.backends.cudnn.benchmark = False
 
 
 # added
@@ -38,11 +47,12 @@ def load_reference(data_dir, batch_size, image_size, class_cond=False, domain = 
 
 def main():
     args = create_argparser().parse_args()
-
+    set_seed(42)
     # th.manual_seed(0)
 
     dist_util.setup_dist()
-    logger.configure(dir=args.save_dir)
+    dir = os.path.join(args.save_dir,args.source_dataset + '_style')
+    logger.configure(dir=dir)
 
     args.target_dataset.remove(args.source_dataset)
     logger.log(f'the source domain is {args.source_dataset}')
@@ -52,7 +62,7 @@ def main():
     model, diffusion = create_model_and_diffusion(
         **args_to_dict(args, model_and_diffusion_defaults().keys())
     )
-    model_path = os.path.join(args.model_path, args.source_dataset+'.pt')
+    model_path = os.path.join(args.model_path, args.source_dataset +'.pt')
     model.load_state_dict(
         dist_util.load_state_dict(model_path, map_location="cpu")
     )
@@ -120,7 +130,7 @@ def main():
             for i in range(args.batch_size):
                 #path = os.path.join(logger.get_dir(), filename[i].split('/')[0])
                 #os.makedirs(path, exist_ok=True)
-                out_path = os.path.join(logger.get_dir(), args.source_dataset+'_style', domain[0], filename[i])
+                out_path = os.path.join(logger.get_dir(), domain[0], filename[i])
                 #there r bugs here, coz getitem return domain as a str, but there gonna be a tuple, i dont know why
                 os.makedirs(os.path.dirname(out_path), exist_ok=True)
                 utils.save_image(
@@ -149,11 +159,11 @@ def create_argparser():
         use_ddim=False,
         base_samples="",#base data root path
         model_path="",# ckpt root path
-        save_dir="",#saved data root path
+        save_dir="/home/lmx/VPTTA/generated",#saved data root path
         save_latents=False,
-        source_dataset='RIM_ONE_r3', # One of the dataset:   ['RIM_ONE_r3', 'REFUGE', 'Drishti_GS', 'ORIGA', 'Retina']
-        target_dataset=['RIM_ONE_r3', 'ACRIMA'], 
-        #target_dataset=['RIM_ONE_r3', 'REFUGE', 'Drishti_GS', 'ORIGA', 'Retina']
+        source_dataset='ORIGA', # One of the dataset:   ['RIM_ONE_r3', 'REFUGE', 'Drishti_GS', 'ORIGA', 'Retina']
+        #target_dataset=['RIM_ONE_r3', 'ACRIMA'], 
+        target_dataset=['RIM_ONE_r3', 'REFUGE', 'Drishti_GS', 'ORIGA', 'ACRIMA']
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()

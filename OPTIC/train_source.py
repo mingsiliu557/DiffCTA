@@ -1,4 +1,5 @@
 import os
+import random
 import torch
 import numpy as np
 import argparse, sys, datetime
@@ -13,7 +14,23 @@ from dataloaders.convert_csv_to_list import convert_labeled_list
 from dataloaders.normalize import normalize_image, normalize_image_to_0_1, normalize_image_to_imagenet_standards
 from dataloaders.transform import collate_fn_wo_transform, collate_fn_w_transform
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from networks.resnet import resnet50
+from networks.resnet import resnet50, resnet18
+
+torch.set_num_threads(1)
+
+
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)  # if you are using multi-GPU.
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+# Set the seed for reproducibility
+#set_seed(42)
+
 
 class TrainSource:
     def __init__(self, config):
@@ -82,9 +99,16 @@ class TrainSource:
 
     def build_model(self):
         #self.model = ResUnet(resnet=self.backbone, num_classes=self.out_ch, pretrained=True).to(self.device)
-        self.model = resnet50(pretrained=True)
+        self.model = resnet18(pretrained=True)
         num_feats = self.model.fc.in_features
         self.model.fc = torch.nn.Linear(num_feats, config.out_ch)
+        
+        # Freeze all layers except the final fully connected layer
+        for param in self.model.parameters():
+            param.requires_grad = False
+        for param in self.model.fc.parameters():
+            param.requires_grad = True
+        
         self.model.to(self.device)
         if self.optim == 'SGD':
             self.optimizer = torch.optim.SGD(
@@ -125,8 +149,6 @@ class TrainSource:
         print("The number of total parameters: {}".format(num_params))
 
     def run(self):
-        #metrics_test = [[], [], [], []]
-        #metric_dict = ['Disc_Dice', 'Disc_ASD', 'Cup_Dice', 'Cup_ASD']
         metrics_test = [[]]
         metric_dict = ['Acc']
         best_loss, best_epoch = np.inf, 0
@@ -175,23 +197,27 @@ class TrainSource:
             if best_loss > loss_meter.value()[0]:
                 best_loss = loss_meter.value()[0]
                 best_epoch = (epoch + 1)
-                torch.save(self.model.state_dict(), self.model_path + '/' + 'pretrain-resnet50.pth')
+                torch.save(self.model.state_dict(), self.model_path + '/' + 'pretrain-resnet18.pth')
 
-        torch.save(self.model.state_dict(), self.model_path + '/' + 'last-Resnet50.pth')
+            if (epoch + 1) % config.save_interval == 0:
+                torch.save(self.model.state_dict, self.model_path + '/' + f'pretrain-resnet18_{epoch + 1}.pth')
+            
+
+        torch.save(self.model.state_dict(), self.model_path + '/' + 'last-Resnet18.pth')
         print('The best total loss:{} epoch:{}'.format(best_loss, best_epoch))
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # Dataset
-    parser.add_argument('--Source_Dataset', type=str, default='ACRIMA',
+    parser.add_argument('--Source_Dataset', type=str, default='ORIGA',
                         help='RIM_ONE_r3/REFUGE/ORIGA/ACRIMA/Drishti_GS')
 
     parser.add_argument('--num_workers', type=int, default=0)
     parser.add_argument('--image_size', type=int, default=256)
 
     # Model
-    parser.add_argument('--backbone', type=str, default='resnet50', help='resnet34/resnet50')
+    parser.add_argument('--backbone', type=str, default='resnet18', help='resnet34/resnet50')
     parser.add_argument('--in_ch', type=int, default=3)
     parser.add_argument('--out_ch', type=int, default=2)
 
@@ -206,8 +232,9 @@ if __name__ == '__main__':
     parser.add_argument('--beta2', type=float, default=0.99)  # beta2 in Adam
 
     # Training
-    parser.add_argument('--num_epochs', type=int, default=100)
-    parser.add_argument('--batch_size', type=int, default=4)
+    parser.add_argument('--num_epochs', type=int, default=5)
+    parser.add_argument('--batch_size', type=int, default=8)
+    parser.add_argument('--save_interval', type=int, default=10)
 
     # Loss function
     parser.add_argument('--lossmap', type=str, default=['ce'])

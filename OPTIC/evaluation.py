@@ -9,7 +9,7 @@ from utils.convert import AdaBN
 from utils.memory import Memory
 from utils.prompt import Prompt
 from utils.metrics import calculate_metrics, calculate_cls_metrics
-from networks.resnet import resnet50
+from networks.resnet import resnet50, resnet18
 from torch.utils.data import DataLoader
 from dataloaders.OPTIC_dataloader import OPTIC_dataset, RIM_ONE_dataset, Ensemble_dataset
 from dataloaders.transform import collate_fn_wo_transform
@@ -103,8 +103,8 @@ class VPTTA:
 
     def build_model(self):
         #self.model = ResUnet(resnet=self.backbone, num_classes=self.out_ch, pretrained=False, newBN=AdaBN, warm_n=self.warm_n).to(self.device)
-        self.model = resnet50(pretrained= False, num_classes=self.out_ch)
-        checkpoint = torch.load(os.path.join(self.load_model, 'pretrain-resnet50.pth'))
+        self.model = resnet18(pretrained= False, num_classes=self.out_ch)
+        checkpoint = torch.load(os.path.join(self.load_model, 'last-Resnet18.pth'))
         # self.model.to('cpu') 
         # checkpoint = torch.load(os.path.join(self.load_model, 'quantized_ResUnet.pth'))
         # fuse_model(self.model)  # Fuse Conv, BN, etc. as per your model's fusion setup
@@ -122,7 +122,7 @@ class VPTTA:
         metrics_test = [[]]
         metric_dict = ['Acc']
 
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001)
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.0005)
 
         for batch, data in enumerate(self.target_test_loader):
             x, y = data['data'], data['cls']
@@ -156,7 +156,7 @@ class VPTTA:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # Dataset
-    parser.add_argument('--Source_Dataset', type=str, default='RIM_ONE_r3',
+    parser.add_argument('--Source_Dataset', type=str, default='ORIGA',
                         help='RIM_ONE_r3/REFUGE/ORIGA/REFUGE_Valid/Drishti_GS')
     parser.add_argument('--Target_Dataset', type=list)
 
@@ -164,7 +164,7 @@ if __name__ == '__main__':
     parser.add_argument('--image_size', type=int, default=256)
 
     # Model
-    parser.add_argument('--backbone', type=str, default='resnet50', help='resnet34/resnet50')
+    parser.add_argument('--backbone', type=str, default='resnet18', help='resnet34/resnet50')
     parser.add_argument('--in_ch', type=int, default=3)
     parser.add_argument('--out_ch', type=int, default=2)
 

@@ -4,7 +4,6 @@
 dataset_root=/home/lmx/VPTTA/Data
 model_root=/home/lmx/VPTTA/OPTIC/models/
 path_save_log=/home/lmx/VPTTA/OPTIC/logs/
-generate_root=/home/lmx/VPTTA/generated
 
 #Dataset [RIM_ONE_r3, REFUGE, ORIGA, ACRIMA, Drishti_GS]
 Source=REFUGE
@@ -21,9 +20,8 @@ warm_n=5
 
 #Command
 cd OPTIC
-CUDA_VISIBLE_DEVICES=1 python TTA.py \
+CUDA_VISIBLE_DEVICES=1 python evaluation.py \
 --dataset_root $dataset_root --model_root $model_root --path_save_log $path_save_log \
 --Source_Dataset $Source \
 --optimizer $optimizer --lr $lr \
---memory_size $memory_size --neighbor $neighbor --prompt_alpha $prompt_alpha --warm_n $warm_n \
---generate_root $generate_root
+--memory_size $memory_size --neighbor $neighbor --prompt_alpha $prompt_alpha --warm_n $warm_n
