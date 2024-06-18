@@ -78,4 +78,14 @@ bash TTA.sh
 
 RIM_ONE: 57.91->58.18;        REFUGE:42.04--->43.1;          ORIGA:61.98 -->61.7;            ACRIMA: (还在训source pth)：27.62 -->28.15;          Drishti_GS：62.76  -->58.62
 
+
+	RIM_ONE	REFUGE	ORIGA	ACRIMA	Drishti_GS
+No Adaptation	62.3	61.55	63.01	37.94	33.68
+TENT	63.857	58.5	60.294	24.0244	33.52
+CoTTA	63.857	58.5	60.29	71.8	52.8
+EATA	63.857	58.5	60.29	24.02	33.52
+My Method	64.01	61.925	62.94	38.63	33.8
+![image](https://github.com/mingsiliu557/OPTIC_CLASSIFY/assets/146318777/86205573-f4b4-4328-8707-35905dec95a4)
+
+
 '''
