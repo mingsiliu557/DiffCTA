@@ -18,15 +18,15 @@ def normalize_image_to_0_1(img):
     return img
 
 def normalize_image_to_imagenet_standards(img):
-    # ImageNet的均值和标准差
+
     mean = np.array([0.485, 0.456, 0.406])
     std = np.array([0.229, 0.224, 0.225])
     
-    if len(img.shape) == 4:  # 批处理，形状为 (N, C, H, W)
+    if len(img.shape) == 4:
         for b in range(img.shape[0]):
             for c in range(img.shape[1]):
                 img[b, c] = (img[b, c] - mean[c]) / std[c]
-    else:  # 单个图像，形状为 (C, H, W)
+    else:
         for c in range(img.shape[0]):
             img[c] = (img[c] - mean[c]) / std[c]
     return img
