@@ -17,7 +17,7 @@ from dataloaders.OPTIC_dataloader import OPTIC_dataset, RIM_ONE_dataset, Ensembl
 from dataloaders.transform import collate_fn_wo_transform_ensemble
 from dataloaders.convert_csv_to_list import convert_labeled_list
 from dataloaders.normalize import normalize_image, normalize_image_to_0_1, normalize_image_to_imagenet_standards
-import tent
+import algorithm.tent as tent
 from torchvision.transforms import transforms
 
 torch.set_num_threads(1)
@@ -104,7 +104,7 @@ class VPTTA:
 
     def build_model(self):
         self.model = resnet18(pretrained=False, num_classes=self.out_ch)
-        checkpoint = torch.load(os.path.join(self.load_model, 'pretrain-resnet18.pth'))
+        checkpoint = torch.load(os.path.join(self.load_model, 'useful-resnet18.pth'))
         self.model.load_state_dict(checkpoint, strict=True)
         self.model.to(self.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001)

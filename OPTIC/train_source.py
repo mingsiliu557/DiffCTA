@@ -29,7 +29,7 @@ def set_seed(seed):
     torch.backends.cudnn.benchmark = False
 
 # Set the seed for reproducibility
-#set_seed(42)
+set_seed(42)
 
 
 class TrainSource:
