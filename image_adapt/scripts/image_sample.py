@@ -38,7 +38,7 @@ def load_reference(data_dir, batch_size, image_size, class_cond=False,):
 def main():
     args = create_argparser().parse_args()
 
-    # th.manual_seed(0)
+    th.manual_seed(42)
 
     dist_util.setup_dist()
     logger.configure(dir=args.save_dir)
@@ -47,6 +47,10 @@ def main():
     model, diffusion = create_model_and_diffusion(
         **args_to_dict(args, model_and_diffusion_defaults().keys())
     )
+    #print(args.model_path)
+    #model.load_state_dict(
+    #    dist_util.load_state_dict(args.model_path, map_location="cpu")
+    #)
     model.load_state_dict(
         dist_util.load_state_dict(args.model_path, map_location="cpu")
     )
