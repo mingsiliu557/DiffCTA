@@ -210,7 +210,7 @@ class TrainSource:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # Dataset
-    parser.add_argument('--Source_Dataset', type=str, default='ORIGA',
+    parser.add_argument('--Source_Dataset', type=str, default='REFUGE',
                         help='RIM_ONE_r3/REFUGE/ORIGA/ACRIMA/Drishti_GS')
 
     parser.add_argument('--num_workers', type=int, default=0)
@@ -242,10 +242,10 @@ if __name__ == '__main__':
     # Path
     parser.add_argument('--path_save_log', type=str, default='./OPTIC/logs/')
     parser.add_argument('--path_save_model', type=str, default='./OPTIC/models/')
-    parser.add_argument('--dataset_root', type=str, default='/home/lmx/VPTTA/Data')
+    parser.add_argument('--dataset_root', type=str, default='/lmx/data/OPTIC_CLASSIFY/Data')
 
     # Cuda (default: the first available device)
-    parser.add_argument('--device', type=str, default='cuda:0')
+    parser.add_argument('--device', type=str, default='cuda:3')
 
     config = parser.parse_args()
 

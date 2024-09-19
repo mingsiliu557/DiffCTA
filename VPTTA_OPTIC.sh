@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #Please modify the following roots to yours.
-dataset_root=/home/lmx/VPTTA/Data
+dataset_root=/lmx/data/OPTIC_CLASSIFY/Data
 model_root=/home/lmx/VPTTA/OPTIC/models/
 path_save_log=/home/lmx/VPTTA/OPTIC/logs/
 
