@@ -159,9 +159,9 @@ def create_argparser():
         use_ddim=False,
         base_samples="",#base data root path
         model_path="",# ckpt root path
-        save_dir="/home/lmx/VPTTA/generated",#saved data root path
+        save_dir="/lmx/data/OPTIC_CLASSIFY/generated",#saved data root path
         save_latents=False,
-        source_dataset='ORIGA', # One of the dataset:   ['RIM_ONE_r3', 'REFUGE', 'Drishti_GS', 'ORIGA', 'Retina']
+        source_dataset='ACRIMA', # One of the dataset:   ['RIM_ONE_r3', 'REFUGE', 'Drishti_GS', 'ORIGA', 'ACRIMA']
         #target_dataset=['RIM_ONE_r3', 'ACRIMA'], 
         target_dataset=['RIM_ONE_r3', 'REFUGE', 'Drishti_GS', 'ORIGA', 'ACRIMA']
     )

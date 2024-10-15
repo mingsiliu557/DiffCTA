@@ -104,7 +104,7 @@ class VPTTA:
 
     def build_model(self):
         self.model = resnet18(pretrained=False, num_classes=self.out_ch)
-        checkpoint = torch.load(os.path.join(self.load_model, 'useful-resnet18.pth'))
+        checkpoint = torch.load(os.path.join(self.load_model, 'last-Resnet18.pth'))
         self.model.load_state_dict(checkpoint, strict=True)
         self.model.to(self.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001)
@@ -172,10 +172,10 @@ if __name__ == '__main__':
     parser.add_argument('--neighbor', type=int, default=16)
     parser.add_argument('--prompt_alpha', type=float, default=0.01)
     parser.add_argument('--warm_n', type=int, default=5)
-    parser.add_argument('--path_save_log', type=str, default='./logs')
-    parser.add_argument('--model_root', type=str, default='./OPTIC/models')
-    parser.add_argument('--dataset_root', type=str, default='/home/lmx/VPTTA/Data')
-    parser.add_argument('--generate_root', type=str, default='/home/lmx/VPTTA/generated')
+    parser.add_argument('--path_save_log', type=str, default='/lmx/data/OPTIC_CLASSIFY/OPTIC/logs')
+    parser.add_argument('--model_root', type=str, default='/lmx/data/OPTIC_CLASSIFY/OPTIC/models')
+    parser.add_argument('--dataset_root', type=str, default='/lmx/data/OPTIC_CLASSIFY/Data')
+    parser.add_argument('--generate_root', type=str, default='/lmx/data/OPTIC_CLASSIFY/generated')
     parser.add_argument('--device', type=str, default='cuda:0')
 
     config = parser.parse_args()

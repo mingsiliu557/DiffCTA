@@ -1,12 +1,12 @@
 #!/bin/bash
 
 #Please modify the following roots to yours.
-dataset_root=/home/lmx/VPTTA/Data
-model_root=/home/lmx/VPTTA/OPTIC/models/
-path_save_log=/home/lmx/VPTTA/OPTIC/logs/
+dataset_root=/lmx/data/OPTIC_CLASSIFY/Data
+model_root=/lmx/data/OPTIC_CLASSIFY/OPTIC/models/
+path_save_log=//lmx/data/OPTIC_CLASSIFY/OPTIC/logs/
 
 #Dataset [RIM_ONE_r3, REFUGE, ORIGA, ACRIMA, Drishti_GS]
-Source=REFUGE
+Source=Drishti_GS
 
 #Optimizer
 optimizer=Adam

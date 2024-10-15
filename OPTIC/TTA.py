@@ -119,7 +119,7 @@ class VPTTA:
     def build_model(self):
         #self.model = ResUnet(resnet=self.backbone, num_classes=self.out_ch, pretrained=False, newBN=AdaBN, warm_n=self.warm_n).to(self.device)
         self.model = resnet18(pretrained= False, num_classes=self.out_ch)
-        checkpoint = torch.load(os.path.join(self.load_model, 'last-Resnet18.pth'))
+        checkpoint = torch.load(os.path.join(self.load_model, 'last-Resnet18.pth'), map_location='cuda:0')
         # self.model.to('cpu') 
         # checkpoint = torch.load(os.path.join(self.load_model, 'quantized_ResUnet.pth'))
         # fuse_model(self.model)  # Fuse Conv, BN, etc. as per your model's fusion setup

@@ -105,9 +105,9 @@ class TrainSource:
         
         # Freeze all layers except the final fully connected layer
         for param in self.model.parameters():
-            param.requires_grad = False
-        for param in self.model.fc.parameters():
             param.requires_grad = True
+        # for param in self.model.fc.parameters():
+        #     param.requires_grad = True
         
         self.model.to(self.device)
         if self.optim == 'SGD':
@@ -210,7 +210,7 @@ class TrainSource:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # Dataset
-    parser.add_argument('--Source_Dataset', type=str, default='REFUGE',
+    parser.add_argument('--Source_Dataset', type=str, default='Drishti_GS',
                         help='RIM_ONE_r3/REFUGE/ORIGA/ACRIMA/Drishti_GS')
 
     parser.add_argument('--num_workers', type=int, default=0)
@@ -232,7 +232,7 @@ if __name__ == '__main__':
     parser.add_argument('--beta2', type=float, default=0.99)  # beta2 in Adam
 
     # Training
-    parser.add_argument('--num_epochs', type=int, default=5)
+    parser.add_argument('--num_epochs', type=int, default=2)
     parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--save_interval', type=int, default=10)
 
@@ -245,7 +245,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset_root', type=str, default='/lmx/data/OPTIC_CLASSIFY/Data')
 
     # Cuda (default: the first available device)
-    parser.add_argument('--device', type=str, default='cuda:3')
+    parser.add_argument('--device', type=str, default='cuda:0')
 
     config = parser.parse_args()
 
