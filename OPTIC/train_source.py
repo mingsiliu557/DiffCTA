@@ -106,8 +106,8 @@ class TrainSource:
         # Freeze all layers except the final fully connected layer
         for param in self.model.parameters():
             param.requires_grad = True
-        # for param in self.model.fc.parameters():
-        #     param.requires_grad = True
+        for param in self.model.fc.parameters():
+            param.requires_grad = True
         
         self.model.to(self.device)
         if self.optim == 'SGD':
@@ -210,7 +210,7 @@ class TrainSource:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # Dataset
-    parser.add_argument('--Source_Dataset', type=str, default='Drishti_GS',
+    parser.add_argument('--Source_Dataset', type=str, default='RIM_ONE_r3',
                         help='RIM_ONE_r3/REFUGE/ORIGA/ACRIMA/Drishti_GS')
 
     parser.add_argument('--num_workers', type=int, default=0)

@@ -8,6 +8,9 @@ import numpy as np
 
 import torch as th
 
+import torchvision.transforms as transforms
+
+import unittest
 
 def normal_kl(mean1, logvar1, mean2, logvar2):
     """
@@ -75,3 +78,96 @@ def discretized_gaussian_log_likelihood(x, *, means, log_scales):
     )
     assert log_probs.shape == x.shape
     return log_probs
+
+
+# Existing AugMixWrapper class and marginal_entropy_loss function
+class AugMixWrapper:
+    def __init__(self, severity=3, alpha=1.0):
+        """
+        AugMixWrapper is to get the mean augmentations.
+        
+        Args:
+            severity (int): AugMix severity.
+            alpha (float): Dirichlet to settle down the weight of every augmentation.
+        """
+        self.severity = severity
+        self.alpha = alpha
+        self.augmentations = transforms.AugMix(severity=self.severity)
+
+    def __call__(self, x):
+        # Apply augmentations and get the mean augmentation
+        original_x = x.clone()  # Copy the original tensor to keep the computation graph intact
+        if x.dtype != th.uint8:
+            x = (x * 255).clamp(0, 255).to(th.uint8)  # Convert to uint8 if necessary
+        
+        weights = th.distributions.Dirichlet(th.tensor([self.alpha] * 3)).sample().to(x.device)
+        mix = th.zeros_like(x, dtype=th.float32)
+        
+        for i in range(3):
+            aug_img = self.augmentations(x)
+            aug_img = aug_img.to(dtype=th.float32) / 255.0  # Ensure aug_img is float32 and normalized to [0, 1]
+            mix += weights[i] * aug_img
+
+        original_x.copy_(mix)  # Update the original tensor with the new augmented values
+        return original_x
+
+def augmentation(x, augmentations=5, severity=3, alpha=1.0):
+    augmix = AugMixWrapper(severity=severity, alpha=alpha)
+    augs = []
+    for _ in range(augmentations):
+        x_aug = augmix(x)
+        augs.append(x_aug)
+
+    # Calculate marginal prediction
+    aug_final = sum(augs) / augmentations
+    return aug_final
+
+def marginal_entropy_loss(model, x, augmentations=5, severity=3, alpha=1.0):
+    augmix = AugMixWrapper(severity=severity, alpha=alpha)
+
+    aug_preds = []
+    for _ in range(augmentations):
+        x_aug = augmix(x)
+        pred = model(x_aug)
+        aug_preds.append(pred)
+    
+    # Calculate marginal prediction
+    marginal_pred = sum(aug_preds) / augmentations
+    
+    # Calculate marginal entropy
+    marginal_entropy = -th.sum(marginal_pred * th.log(marginal_pred + 1e-6)) / marginal_pred.size(0)
+    
+    return marginal_entropy
+
+# Create a simple model for testing
+class SimpleModel(th.nn.Module):
+    def __init__(self):
+        super(SimpleModel, self).__init__()
+        self.fc = th.nn.Linear(3 * 32 * 32, 10)  # Input is a 32x32 RGB image, output is 10 classes
+
+    def forward(self, x):
+        x = x.view(x.size(0), -1)  # Flatten to two dimensions
+        return th.softmax(self.fc(x), dim=1)
+
+# Unit test section
+class TestAugMixWrapper(unittest.TestCase):
+    def setUp(self):
+        # Initialize model and input data
+        self.model = SimpleModel()
+        self.input_data = th.randn(1, 3, 32, 32)  # Randomly generate a 32x32 RGB image
+
+    def test_augmix_wrapper(self):
+        # Test the output shape of AugMixWrapper
+        augmix = AugMixWrapper(severity=3, alpha=1.0)
+        output = augmix(self.input_data)
+        self.assertEqual(output.shape, self.input_data.shape, "Output shape should match input shape")
+
+    def test_marginal_entropy_loss(self):
+        # Test if the marginal entropy loss function runs correctly
+        loss = marginal_entropy_loss(self.model, self.input_data, augmentations=5, severity=3, alpha=1.0)
+        self.assertIsInstance(loss, th.Tensor, "Loss should be a tensor")
+        self.assertGreaterEqual(loss.item(), 0, "Loss should be non-negative")
+        print(f'the loss is {loss.item()}')
+
+if __name__ == "__main__":
+    unittest.main(exit=False)

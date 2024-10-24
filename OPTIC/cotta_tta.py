@@ -113,6 +113,10 @@ class VPTTA:
     def run(self):
         metrics_test = [[]]
         metric_dict = ['Acc']
+        self.model = cotta.configure_model(self.model)
+        params, param_names = cotta.collect_params(self.model, bn_only=True)
+        self.optimizer = torch.optim.Adam(params, lr=0.0005)
+        cotta_model = cotta(self.model, self.optimizer)
 
         for batch, data in enumerate(self.target_test_loader):
             x, x_g, y = data['data'], data['g_data'], data['cls']
@@ -124,10 +128,10 @@ class VPTTA:
             x_g = Variable(x_g).to(self.device)
             #x = transform(x)
             #x_g = transform(x_g)
-            self.model = cotta.configure_model(self.model)
-            params, param_names = cotta.collect_params(self.model, bn_only=True)
-            self.optimizer = torch.optim.Adam(params, lr=0.0005)
-            cotta_model = cotta(self.model, self.optimizer)
+            # self.model = cotta.configure_model(self.model)
+            # params, param_names = cotta.collect_params(self.model, bn_only=True)
+            # self.optimizer = torch.optim.Adam(params, lr=0.0005)
+            # cotta_model = cotta(self.model, self.optimizer)
 
 
             #with torch.no_grad():
@@ -154,7 +158,7 @@ class VPTTA:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--Source_Dataset', type=str, default='Drishti_GS', help='RIM_ONE_r3/REFUGE/ORIGA/ACRIMA/Drishti_GS')
+    parser.add_argument('--Source_Dataset', type=str, default='RIM_ONE_r3', help='RIM_ONE_r3/REFUGE/ORIGA/ACRIMA/Drishti_GS')
     parser.add_argument('--Target_Dataset', type=list)
     parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--image_size', type=int, default=256)

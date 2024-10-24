@@ -14,6 +14,7 @@ from image_adapt.guided_diffusion.script_util import (
     add_dict_to_argparser,
 )
 from image_adapt.guided_diffusion.image_datasets import load_data, ImageDataset
+from OPTIC.networks.resnet import resnet18, resnet50
 from torchvision import utils
 import math
 from torch.nn.parallel.distributed import DistributedDataParallel as DDP
@@ -38,8 +39,6 @@ def load_reference(data_dir, batch_size, image_size, class_cond=False, domain = 
         class_cond=class_cond,
         deterministic=True,
         random_flip=False,
-        #corruption=corruption,
-        #severity=severity,
     )
 
     return data_loader
@@ -58,7 +57,7 @@ def main():
     logger.log(f'the source domain is {args.source_dataset}')
     logger.log(f'the target domain is {args.target_dataset}')
 
-    logger.log("creating model...")
+    logger.log("creating diffusion model...")
     model, diffusion = create_model_and_diffusion(
         **args_to_dict(args, model_and_diffusion_defaults().keys())
     )
@@ -79,6 +78,29 @@ def main():
         find_unused_parameters=False,
     )
     model.eval()
+
+    logger.log("creating the cls model")
+
+    cls_model = resnet18(pretrained=True)
+    num_feats = cls_model.fc.in_features
+    cls_model.fc = th.nn.Linear(num_feats, args.out_ch)
+    cls_model_path = os.path.join('/lmx/data/OPTIC_CLASSIFY/OPTIC/models', args.source_dataset, 'last-Resnet18.pth')
+    cls_model.load_state_dict(
+        dist_util.load_state_dict(cls_model_path, map_location="cpu")
+    )
+    cls_model.to(dist_util.dev())
+    # if args.use_fp16:
+    #     cls_model.convert_to_fp16()
+
+    cls_model = DDP(
+        cls_model,
+        device_ids=[dist_util.dev()],
+        output_device=dist_util.dev(),
+        broadcast_buffers=False,
+        bucket_cap_mb=128,
+        find_unused_parameters=False,
+    )
+    cls_model.eval()
 
     logger.log("creating resizers...")
     assert math.log(args.D, 2).is_integer()
@@ -118,6 +140,7 @@ def main():
             model_kwargs = {k: v.to(dist_util.dev()) for k, v in model_kwargs.items()}
             sample = diffusion.p_sample_loop(
                 model,
+                cls_model,
                 (args.batch_size, 3, args.image_size, args.image_size),
                 clip_denoised=args.clip_denoised,
                 model_kwargs=model_kwargs,
@@ -161,6 +184,7 @@ def create_argparser():
         model_path="",# ckpt root path
         save_dir="/lmx/data/OPTIC_CLASSIFY/generated",#saved data root path
         save_latents=False,
+        out_ch=2,
         source_dataset='ACRIMA', # One of the dataset:   ['RIM_ONE_r3', 'REFUGE', 'Drishti_GS', 'ORIGA', 'ACRIMA']
         #target_dataset=['RIM_ONE_r3', 'ACRIMA'], 
         target_dataset=['RIM_ONE_r3', 'REFUGE', 'Drishti_GS', 'ORIGA', 'ACRIMA']

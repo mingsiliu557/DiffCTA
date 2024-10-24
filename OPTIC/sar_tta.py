@@ -7,9 +7,9 @@ import argparse, sys, datetime
 import torch.nn.functional as F
 from config import Logger
 from torch.autograd import Variable
-from utils.convert import AdaBN
-from utils.memory import Memory
-from utils.prompt import Prompt
+# from utils.convert import AdaBN
+# from utils.memory import Memory
+# from utils.prompt import Prompt
 from utils.metrics import calculate_metrics, calculate_cls_metrics
 from networks.resnet import resnet50, resnet18
 from torch.utils.data import DataLoader
@@ -17,8 +17,11 @@ from dataloaders.OPTIC_dataloader import OPTIC_dataset, RIM_ONE_dataset, Ensembl
 from dataloaders.transform import collate_fn_wo_transform_ensemble
 from dataloaders.convert_csv_to_list import convert_labeled_list
 from dataloaders.normalize import normalize_image, normalize_image_to_0_1, normalize_image_to_imagenet_standards
-import algorithm.tent as tent
+#import algorithm.tent as tent
+import algorithm.sar as sar
+from algorithm.sam import SAM
 from torchvision.transforms import transforms
+import math
 
 torch.set_num_threads(1)
 
@@ -112,6 +115,12 @@ class VPTTA:
     def run(self):
         metrics_test = [[]]
         metric_dict = ['Acc']
+        self.model = sar.configure_model(self.model)
+        params, param_names = sar.collect_params(self.model)
+        optimizer = torch.optim.SGD
+        self.optimizer = SAM(params, optimizer, lr=config.lr, momentum=0.9)
+
+        adapt_model = sar.SAR(self.model, self.optimizer, margin_e0=0.4*math.log(1000))        
 
         for batch, data in enumerate(self.target_test_loader):
             x, x_g, y = data['data'], data['g_data'], data['cls']
@@ -123,18 +132,19 @@ class VPTTA:
             x_g = Variable(x_g).to(self.device)
             #x = transform(x)
             #x_g = transform(x_g)
-            self.model = tent.configure_model(self.model)
-            params, param_names = tent.collect_params(self.model)
-            self.optimizer = torch.optim.Adam(params, lr=0.0005)
-            tented_model = tent.Tent(self.model, self.optimizer)
-
+            # self.model = sar.configure_model(self.model)
+            # params, param_names = sar.collect_params(self.model)
+            # optimizer = torch.optim.SGD
+            # self.optimizer = SAM(params, optimizer, lr=config.lr, momentum=0.9)
+            # #tented_model = tent.Tent(self.model, self.optimizer)
+            # adapt_model = sar.SAR(self.model, self.optimizer, margin_e0=0.4*math.log(1000))
 
             #with torch.no_grad():
             #x = self.quant(x)
             #x_g = self.quant(x_g)
             #x = torch.randn(1,3,256,256).to(self.device)
             #x_g = torch.randn(1,3,256,256).to(self.device)
-            pred_logit = tented_model(x)
+            pred_logit = adapt_model(x)
                 #x = torch.randn(1,3,256,256)
             #pred_logit_g = tented_model(x_g)
 
@@ -153,7 +163,7 @@ class VPTTA:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--Source_Dataset', type=str, default='RIM_ONE_r3', help='RIM_ONE_r3/REFUGE/ORIGA/ACRIMA/Drishti_GS')
+    parser.add_argument('--Source_Dataset', type=str, default='Drishti_GS', help='RIM_ONE_r3/REFUGE/ORIGA/ACRIMA/Drishti_GS')
     parser.add_argument('--Target_Dataset', type=list)
     parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--image_size', type=int, default=256)

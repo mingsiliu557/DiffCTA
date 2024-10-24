@@ -12,7 +12,7 @@ import numpy as np
 import torch as th
 
 from .nn import mean_flat
-from .losses import normal_kl, discretized_gaussian_log_likelihood
+from .losses import normal_kl, discretized_gaussian_log_likelihood, marginal_entropy_loss, augmentation, AugMixWrapper
 from image_adapt.resize_right import resize
 
 def get_named_beta_schedule(schedule_name, num_diffusion_timesteps):
@@ -442,6 +442,7 @@ class GaussianDiffusion:
     def p_sample_loop(
         self,
         model,
+        cls_model,
         shape,
         noise=None,
         clip_denoised=True,
@@ -476,6 +477,7 @@ class GaussianDiffusion:
         final = None
         for sample in self.p_sample_loop_progressive(
             model,
+            cls_model,
             shape,
             noise=noise,
             clip_denoised=clip_denoised,
@@ -498,6 +500,7 @@ class GaussianDiffusion:
     def p_sample_loop_progressive(
         self,
         model,
+        cls_model,
         shape,
         noise=None,
         clip_denoised=True,
@@ -556,10 +559,18 @@ class GaussianDiffusion:
                 cond_fn=cond_fn,
                 model_kwargs=model_kwargs,
             )
-
-            difference = resize(resize(model_kwargs["ref_img"], scale_factors=1.0/D, out_shape=shape_d), scale_factors=D, out_shape=shape_u) - resize(resize(out["pred_xstart"], scale_factors=1.0/D, out_shape=shape_d), scale_factors=D, out_shape=shape_u)
-            norm = th.linalg.norm(difference)
-            norm_grad = th.autograd.grad(outputs=norm, inputs=img)[0]
+            #marginal_loss = marginal_entropy_loss(cls_model, out["pred_xstart"])
+            augmix = AugMixWrapper(severity=5, alpha=1.0)
+            aug_pred_xstart = augmix(out["pred_xstart"])
+            #difference = resize(resize(model_kwargs["ref_img"], scale_factors=1.0/D, out_shape=shape_d), scale_factors=D, out_shape=shape_u) - resize(resize(out["pred_xstart"], scale_factors=1.0/D, out_shape=shape_d), scale_factors=D, out_shape=shape_u)
+            difference = resize(resize(model_kwargs["ref_img"], scale_factors=1.0/D, out_shape=shape_d), scale_factors=D, out_shape=shape_u) - resize(resize(aug_pred_xstart, scale_factors=1.0/D, out_shape=shape_d), scale_factors=D, out_shape=shape_u)
+                        
+            l1_norm = th.linalg.norm(difference)
+            #l1_norm_grad = th.autograd.grad(outputs=l1_norm, inputs=img)[0]
+            #margin_norm = th.linalg.norm(marginal_loss)
+            #marginal_norm_grad = th.autograd.grad(outputs=margin_norm, inputs=img)[0]
+            loss = l1_norm
+            norm_grad = th.autograd.grad(outputs=loss, inputs=img)[0]
             out["sample"] -= norm_grad * scale
 
             yield out

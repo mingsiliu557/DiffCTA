@@ -151,6 +151,10 @@ class VPTTA:
         fisher_loader = self.target_test_loader  # Assuming the same data loader can be used
         fisher_size = 500  # Or any other number you want
         fishers = self.compute_fishers(fisher_loader, fisher_size)
+        self.model = eata.configure_model(self.model)
+        params, param_names = eata.collect_params(self.model)
+        self.optimizer = torch.optim.Adam(params, lr=0.00025)
+        eata_model = eata.EATA(self.model, self.optimizer, fishers=fishers)
 
         for batch, data in enumerate(self.target_test_loader):
             x, x_g, y = data['data'], data['g_data'], data['cls']
@@ -162,10 +166,7 @@ class VPTTA:
             x_g = Variable(x_g).to(self.device)
             #x = transform(x)
             #x_g = transform(x_g)
-            self.model = eata.configure_model(self.model)
-            params, param_names = eata.collect_params(self.model)
-            self.optimizer = torch.optim.Adam(params, lr=0.00025)
-            eata_model = eata.EATA(self.model, self.optimizer, fishers=fishers)
+
 
 
             pred_logit = eata_model(x)
@@ -188,7 +189,7 @@ class VPTTA:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--Source_Dataset', type=str, default='Drishti_GS', help='RIM_ONE_r3/REFUGE/ORIGA/ACRIMA/Drishti_GS')
+    parser.add_argument('--Source_Dataset', type=str, default='RIM_ONE_r3', help='RIM_ONE_r3/REFUGE/ORIGA/ACRIMA/Drishti_GS')
     parser.add_argument('--Target_Dataset', type=list)
     parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--image_size', type=int, default=256)
