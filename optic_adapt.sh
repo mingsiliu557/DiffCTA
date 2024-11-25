@@ -4,5 +4,5 @@ MODEL_FLAGS="--attention_resolutions 32,16,8 --class_cond False --diffusion_step
 
 CUDA_VISIBLE_DEVICES=1 mpiexec -n 1 python image_adapt/scripts/optic_sample.py $MODEL_FLAGS \
                             --batch_size 1 --num_samples 1000 --timestep_respacing 100 \
-                            --model_path /lmx/data/diffusion_training/ckpt/RIM_ONE_r3 --base_samples Data \
-                      --source_dataset RIM_ONE_r3
+                            --model_path /lmx/data/diffusion_training/ckpt/REFUGE --base_samples Data \
+                      --source_dataset REFUGE

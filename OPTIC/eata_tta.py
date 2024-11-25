@@ -21,6 +21,7 @@ from dataloaders.normalize import normalize_image, normalize_image_to_0_1, norma
 from algorithm.cotta import CoTTA as cotta
 import algorithm.eata as eata
 from torchvision.transforms import transforms
+import ast
 
 torch.set_num_threads(1)
 
@@ -190,7 +191,7 @@ class VPTTA:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--Source_Dataset', type=str, default='RIM_ONE_r3', help='RIM_ONE_r3/REFUGE/ORIGA/ACRIMA/Drishti_GS')
-    parser.add_argument('--Target_Dataset', type=list)
+    parser.add_argument('--Target_Dataset', type=str)
     parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--image_size', type=int, default=256)
     parser.add_argument('--backbone', type=str, default='resnet18', help='resnet34/resnet50')
@@ -215,7 +216,7 @@ if __name__ == '__main__':
     parser.add_argument('--device', type=str, default='cuda:0')
 
     config = parser.parse_args()
-    config.Target_Dataset = ['RIM_ONE_r3', 'REFUGE', 'Drishti_GS', 'ORIGA', 'ACRIMA']
+    config.Target_Dataset = ast.literal_eval(config.Target_Dataset)
     config.Target_Dataset.remove(config.Source_Dataset)
 
     TTA = VPTTA(config)

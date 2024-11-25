@@ -2,11 +2,13 @@
 
 #Please modify the following roots to yours.
 dataset_root=/lmx/data/OPTIC_CLASSIFY/Data
-model_root=/home/lmx/VPTTA/OPTIC/models/
-path_save_log=/home/lmx/VPTTA/OPTIC/logs/
+model_root=/lmx/data/OPTIC_CLASSIFY/OPTIC/models/
+path_save_log=//lmx/data/OPTIC_CLASSIFY/OPTIC/logs/
+generate_root=/lmx/data/OPTIC_CLASSIFY/generated
 
 #Dataset [RIM_ONE_r3, REFUGE, ORIGA, ACRIMA, Drishti_GS]
-Source=ACRIMA
+Source=RIM_ONE_r3
+Target_Dataset="['RIM_ONE_r3','Drishti_GS']"
 
 #Optimizer
 optimizer=Adam
@@ -20,8 +22,9 @@ warm_n=5
 
 #Command
 cd OPTIC
-CUDA_VISIBLE_DEVICES=1 python evaluation.py \
+CUDA_VISIBLE_DEVICES=1 python tent_tta.py \
 --dataset_root $dataset_root --model_root $model_root --path_save_log $path_save_log \
 --Source_Dataset $Source \
 --optimizer $optimizer --lr $lr \
---memory_size $memory_size --neighbor $neighbor --prompt_alpha $prompt_alpha --warm_n $warm_n
+--memory_size $memory_size --neighbor $neighbor --prompt_alpha $prompt_alpha --warm_n $warm_n \
+--generate_root $generate_root --Target_Dataset "$Target_Dataset"

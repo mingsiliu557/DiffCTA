@@ -15,6 +15,7 @@ from dataloaders.OPTIC_dataloader import OPTIC_dataset, RIM_ONE_dataset, Ensembl
 from dataloaders.transform import collate_fn_wo_transform
 from dataloaders.convert_csv_to_list import convert_labeled_list
 from dataloaders.normalize import normalize_image, normalize_image_to_0_1, normalize_image_to_imagenet_standards
+import ast
 
 torch.set_num_threads(1)
 
@@ -158,7 +159,7 @@ if __name__ == '__main__':
     # Dataset
     parser.add_argument('--Source_Dataset', type=str, default='ORIGA',
                         help='RIM_ONE_r3/REFUGE/ORIGA/REFUGE_Valid/Drishti_GS')
-    parser.add_argument('--Target_Dataset', type=list)
+    parser.add_argument('--Target_Dataset', type=str)
 
     parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--image_size', type=int, default=256)
@@ -197,7 +198,7 @@ if __name__ == '__main__':
 
     config = parser.parse_args()
 
-    config.Target_Dataset = ['RIM_ONE_r3', 'REFUGE', 'Drishti_GS', 'ORIGA', 'ACRIMA']
+    config.Target_Dataset = ast.literal_eval(config.Target_Dataset)
     config.Target_Dataset.remove(config.Source_Dataset)
 
     TTA = VPTTA(config)

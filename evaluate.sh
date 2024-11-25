@@ -6,7 +6,9 @@ model_root=/lmx/data/OPTIC_CLASSIFY/OPTIC/models/
 path_save_log=//lmx/data/OPTIC_CLASSIFY/OPTIC/logs/
 
 #Dataset [RIM_ONE_r3, REFUGE, ORIGA, ACRIMA, Drishti_GS]
-Source=Drishti_GS
+Source=RIM_ONE_r3
+Target_Dataset="['RIM_ONE_r3', 'Drishti_GS']"
+
 
 #Optimizer
 optimizer=Adam
@@ -22,6 +24,4 @@ warm_n=5
 cd OPTIC
 CUDA_VISIBLE_DEVICES=1 python evaluation.py \
 --dataset_root $dataset_root --model_root $model_root --path_save_log $path_save_log \
---Source_Dataset $Source \
---optimizer $optimizer --lr $lr \
---memory_size $memory_size --neighbor $neighbor --prompt_alpha $prompt_alpha --warm_n $warm_n
+--Source_Dataset $Source --Target_Dataset "$Target_Dataset"

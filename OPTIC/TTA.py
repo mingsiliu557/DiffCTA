@@ -16,9 +16,13 @@ from dataloaders.OPTIC_dataloader import RIM_ONE_dataset, Ensemble_dataset
 from dataloaders.transform import collate_fn_wo_transform_ensemble
 from dataloaders.convert_csv_to_list import convert_labeled_list
 from dataloaders.normalize import normalize_image, normalize_image_to_0_1, normalize_image_to_imagenet_standards
+import ast
 
 torch.set_num_threads(1)
 
+def softmax_entropy(x: torch.Tensor) -> torch.Tensor:
+    """Entropy of softmax distribution from logits."""
+    return -(x.softmax(1) * x.log_softmax(1)).sum(1)
 
 def set_seed(seed):
     random.seed(seed)
@@ -153,9 +157,13 @@ class VPTTA:
                 x = self.quant(x)
                 pred_logit = self.model(x)
                 x_g = self.quant(x_g)
-                pred_logit_g = self.model(x_g)                
-                pred_logit = (pred_logit_g + pred_logit)/2
-                #pred_logit = pred_logit_g
+                pred_logit_g = self.model(x_g)
+                # h_x = softmax_entropy(pred_logit)
+                # h_x_g = softmax_entropy(pred_logit_g)
+                # if(h_x_g > h_x):                
+                #     pred_logit = (pred_logit_g + pred_logit)/2
+                # else:                    
+                pred_logit = pred_logit_g
 
             metrics = calculate_cls_metrics(pred_logit.detach().cpu(), y.detach().cpu())
             for i in range(len(metrics)):
@@ -173,7 +181,7 @@ if __name__ == '__main__':
     # Dataset
     parser.add_argument('--Source_Dataset', type=str, default='ORIGA',
                         help='RIM_ONE_r3/REFUGE/ORIGA/ACRIMA/Drishti_GS')
-    parser.add_argument('--Target_Dataset', type=list)
+    parser.add_argument('--Target_Dataset', type=str)
 
     parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--image_size', type=int, default=256)
@@ -212,7 +220,7 @@ if __name__ == '__main__':
 
     config = parser.parse_args()
 
-    config.Target_Dataset = ['RIM_ONE_r3', 'REFUGE', 'Drishti_GS', 'ORIGA', 'ACRIMA']
+    config.Target_Dataset = ast.literal_eval(config.Target_Dataset)
     config.Target_Dataset.remove(config.Source_Dataset)
 
     TTA = VPTTA(config)
