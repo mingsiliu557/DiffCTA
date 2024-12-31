@@ -11,11 +11,12 @@ import lpips
 import numpy as np
 import torch as th
 import torch.nn.functional as F
+import torch.nn as nn
+
 
 from .nn import mean_flat
 from .losses import normal_kl, discretized_gaussian_log_likelihood, marginal_entropy_loss, AugMixWrapper, dice_loss
-from image_adapt.resize_right import resize
-import torch
+from seg_adapt.resize_right import resize
 
 def get_named_beta_schedule(schedule_name, num_diffusion_timesteps):
     """
@@ -445,7 +446,7 @@ class GaussianDiffusion:
         self,
         model,
         clip_model,
-        cls_model,
+        seg_model,
         shape,
         noise=None,
         clip_denoised=True,
@@ -481,7 +482,7 @@ class GaussianDiffusion:
         for sample in self.p_sample_loop_progressive(
             model,
             clip_model,
-            cls_model,
+            seg_model,
             shape,
             noise=noise,
             clip_denoised=clip_denoised,
@@ -505,7 +506,7 @@ class GaussianDiffusion:
         self,
         model,
         editor,
-        cls_model,
+        seg_model,
         shape,
         noise=None,
         clip_denoised=True,
@@ -566,6 +567,8 @@ class GaussianDiffusion:
                 model_kwargs=model_kwargs,
             )
 
+            #采样优化
+
             xblk = th.zeros_like(out["pred_xstart"], device=device)
             xwhi = th.ones_like(out["pred_xstart"], device=device)
 
@@ -576,6 +579,7 @@ class GaussianDiffusion:
             max_norm = max(blk_norm, whi_norm)
             xpred_norm = th.linalg.norm(out["pred_xstart"] - model_kwargs["ref_img"])
             flag = xpred_norm <= 0.1 * max_norm
+            flag = True
 
             if flag:
                 
@@ -584,20 +588,21 @@ class GaussianDiffusion:
                 # lpip_loss = loss_fn(model_kwargs["ref_img"], out["pred_xstart"])
 
 
-                #marginal_loss 
-                augmix = AugMixWrapper(severity=3, num_aug=16, alpha=1.0)
-                aug_pred_xstart = augmix(out["pred_xstart"])                
-                marginal_loss = marginal_entropy_loss(cls_model, aug_pred_xstart)
+                # marginal_loss 
+                # augmix = AugMixWrapper(severity=3, num_aug=16, alpha=1.0)
+                # aug_pred_xstart = augmix(out["pred_xstart"])                
+                # marginal_loss = marginal_entropy_loss(cls_model, aug_pred_xstart)
 
 
                 # dice loss
 
-                # logit_g = seg_model(resize(out['pred_xstart'], scale_factors=1, out_shape=shape_seg))
-                # logit = seg_model(resize(model_kwargs["ref_img"], scale_factors=1, out_shape=shape_seg))
-                # seg_output = torch.sigmoid(logit)
-                # seg_output_g = torch.sigmoid(logit_g)
-                # dice = dice_loss(seg_output, seg_output_g)
-
+                pred_xstart = (out['pred_xstart'] + 1)/2
+                ref_img = (model_kwargs['ref_img'] + 1)/2  # norm to 0___1
+                logit_g, fea, _ = seg_model(resize(pred_xstart, scale_factors=1, out_shape=shape_seg))
+                logit, fea, _ = seg_model(resize(ref_img, scale_factors=1, out_shape=shape_seg))
+                seg_output = th.sigmoid(logit)
+                seg_output_g = th.sigmoid(logit_g)
+                dice = dice_loss(seg_output, seg_output_g)
 
                 # clip loss
                 text = 'a photo of a retinal fundus'
@@ -606,17 +611,17 @@ class GaussianDiffusion:
 
                 # l1 loss
                 difference = resize(resize(model_kwargs["ref_img"], scale_factors=1.0/D, out_shape=shape_d), scale_factors=D, out_shape=shape_u) - resize(resize(out["pred_xstart"], scale_factors=1.0/D, out_shape=shape_d), scale_factors=D, out_shape=shape_u)
-                #difference = resize(resize(model_kwargs["ref_img"], scale_factors=1.0/D, out_shape=shape_d), scale_factors=D, out_shape=shape_u) - resize(resize(aug_pred_xstart, scale_factors=1.0/D, out_shape=shape_d), scale_factors=D, out_shape=shape_u)
-                
+                #difference = difference * difference
                 clip_norm = th.linalg.norm(clip_loss)            
                 l1_norm = th.linalg.norm(difference)
-
-                marginal_norm = th.linalg.norm(marginal_loss)
+                dice_norm = th.linalg.norm(dice)
+                # dice_norm = th.linalg.norm(dice)
+                #l1_norm_grad = th.autograd.grad(outputs=l1_norm, inputs=img)[0]
+                #marginal_norm = th.linalg.norm(marginal_loss)
                 # lpip_norm = th.linalg.norm(lpip_loss)
                 #marginal_norm_grad = th.autograd.grad(outputs=margin_norm, inputs=img)[0]
-                #dice_norm = th.linalg.norm(dice)
                 
-                loss = l1_norm + 5*clip_norm #lpip_norm
+                loss = l1_norm + dice_norm#lpip_norm
                 norm_grad = th.autograd.grad(outputs=loss, inputs=img)[0]
                 out["sample"] -= norm_grad * scale
 

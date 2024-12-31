@@ -1,35 +1,16 @@
 import os
-import random
 import torch
 import numpy as np
 import argparse, sys, datetime
 from config import *
 from torchnet import meter
-from mmcls.models import build_classifier #to build a classifier
-#from networks.ResUnet import ResUnet
+from networks.ResUnet import ResUnet
 from torch.utils.data import DataLoader
-from utils.metrics import calculate_metrics, calculate_cls_metrics
-from dataloaders.OPTIC_dataloader import OPTIC_dataset, RIM_ONE_dataset, Ensemble_dataset
+from utils.metrics import calculate_metrics
+from dataloaders.OPTIC_dataloader import OPTIC_dataset
 from dataloaders.convert_csv_to_list import convert_labeled_list
-from dataloaders.normalize import normalize_image, normalize_image_to_0_1, normalize_image_to_imagenet_standards
+from dataloaders.normalize import normalize_image, normalize_image_to_0_1
 from dataloaders.transform import collate_fn_wo_transform, collate_fn_w_transform
-from torch.optim.lr_scheduler import ReduceLROnPlateau
-from networks.resnet import resnet50, resnet18
-
-torch.set_num_threads(1)
-
-
-def set_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)  # if you are using multi-GPU.
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-
-# Set the seed for reproducibility
-set_seed(42)
 
 
 class TrainSource:
@@ -53,7 +34,7 @@ class TrainSource:
         else:
             source_train_csv.append(config.Source_Dataset + '.csv')
         sr_img_list, sr_label_list = convert_labeled_list(config.dataset_root, source_train_csv)
-        train_dataset = RIM_ONE_dataset(config.dataset_root, sr_img_list, sr_label_list,
+        train_dataset = OPTIC_dataset(config.dataset_root, sr_img_list, sr_label_list,
                                       config.image_size, img_normalize=False, batch_size=config.batch_size)
         print('Source Train Dataset: ', source_train_csv, len(train_dataset))
         self.source_train_loader = DataLoader(dataset=train_dataset,
@@ -71,7 +52,7 @@ class TrainSource:
 
         # Loss
         self.lossmap = config.lossmap
-        self.cls_cost = Cls_loss(self.lossmap)
+        self.seg_cost = Seg_loss(self.lossmap)
 
         # Optimizer
         self.optim = config.optimizer
@@ -98,18 +79,8 @@ class TrainSource:
         print('***' * 20)
 
     def build_model(self):
-        #self.model = ResUnet(resnet=self.backbone, num_classes=self.out_ch, pretrained=True).to(self.device)
-        self.model = resnet18(pretrained=True)
-        num_feats = self.model.fc.in_features
-        self.model.fc = torch.nn.Linear(num_feats, config.out_ch)
-        
-        # Freeze all layers except the final fully connected layer
-        for param in self.model.parameters():
-            param.requires_grad = True
-        for param in self.model.fc.parameters():
-            param.requires_grad = True
-        
-        self.model.to(self.device)
+        self.model = ResUnet(resnet=self.backbone, num_classes=self.out_ch, pretrained=True).to(self.device)
+
         if self.optim == 'SGD':
             self.optimizer = torch.optim.SGD(
                 self.model.parameters(),
@@ -135,10 +106,8 @@ class TrainSource:
             self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=50, eta_min=1e-7)
         elif self.lr_scheduler == 'Step':
             self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=1, gamma=0.1)
-        elif self.lr_scheduler == 'Epoch':
-            self.scheduler = EpochLR(self.optimizer, epochs=self.num_epochs, gamma=0.9)
-        elif self.lr_scheduler == 'ReduceLR':
-            self.scheduler = ReduceLROnPlateau(self.optimizer, mode='min', factor=0.3, patience=3, verbose=True)
+        # elif self.lr_scheduler == 'Epoch':
+        #     self.scheduler = EpochLR(self.optimizer, epochs=self.num_epochs, gamma=0.9)
         else:
             self.scheduler = None
 
@@ -149,8 +118,8 @@ class TrainSource:
         print("The number of total parameters: {}".format(num_params))
 
     def run(self):
-        metrics_test = [[]]
-        metric_dict = ['Acc']
+        metrics_test = [[], [], [], []]
+        metric_dict = ['Disc_Dice', 'Disc_ASD', 'Cup_Dice', 'Cup_ASD']
         best_loss, best_epoch = np.inf, 0
         loss_meter = meter.AverageValueMeter()
 
@@ -162,12 +131,12 @@ class TrainSource:
             loss_meter.reset()
 
             for batch, data in enumerate(self.source_train_loader):
-                x, y = data['data'], data['cls']
-                x = torch.from_numpy(normalize_image_to_imagenet_standards(x)).to(dtype=torch.float32).to(self.device)
-                y = torch.from_numpy(y).to(dtype=torch.long).to(self.device)
+                x, y = data['data'], data['mask']
+                x = torch.from_numpy(normalize_image_to_0_1(x)).to(dtype=torch.float32).to(self.device)
+                y = torch.from_numpy(y).to(dtype=torch.float32).to(self.device)
 
-                pred = self.model(x)
-                loss = self.cls_cost(pred, y)
+                pred, fea = self.model(x)
+                loss = self.seg_cost(pred, y)
 
                 # Update
                 self.optimizer.zero_grad()
@@ -175,17 +144,16 @@ class TrainSource:
                 self.optimizer.step()
 
                 loss_meter.add(loss.item())
-                #seg_output = torch.sigmoid(pred)
-                metrics = calculate_cls_metrics(pred.detach().cpu(), y.detach().cpu())
+                seg_output = torch.sigmoid(pred)
+                metrics = calculate_metrics(seg_output.detach().cpu(), y.detach().cpu())
                 for i in range(len(metrics)):
-                    #assert isinstance(metrics[i], list), "The metrics value is not list type."
-                    #metrics_test[i] += metrics[i]
-                    metrics_test[i].append(metrics[i])
+                    assert isinstance(metrics[i], list), "The metrics value is not list type."
+                    metrics_test[i] += metrics[i]
 
             if self.scheduler is not None:
-                self.scheduler.step(loss_meter.value()[0])
+                self.scheduler.step()
 
-            print("Train source: Total Loss:{:.8f}".format(loss_meter.value()[0]))
+            print("Train ———— Total Loss:{:.8f}".format(loss_meter.value()[0]))
             metrics_y = np.mean(metrics_test, axis=1)
             print_test_metric = {}
             for i in range(len(metrics_y)):
@@ -197,52 +165,47 @@ class TrainSource:
             if best_loss > loss_meter.value()[0]:
                 best_loss = loss_meter.value()[0]
                 best_epoch = (epoch + 1)
-                torch.save(self.model.state_dict(), self.model_path + '/' + 'pretrain-resnet18.pth')
+                torch.save(self.model.state_dict(), self.model_path + '/' + 'pretrain-Res_Unet.pth')
 
-            if (epoch + 1) % config.save_interval == 0:
-                torch.save(self.model.state_dict, self.model_path + '/' + f'pretrain-resnet18_{epoch + 1}.pth')
-            
-
-        torch.save(self.model.state_dict(), self.model_path + '/' + 'last-Resnet18.pth')
+        torch.save(self.model.state_dict(), self.model_path + '/' + 'last-Res_Unet.pth')
         print('The best total loss:{} epoch:{}'.format(best_loss, best_epoch))
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # Dataset
-    parser.add_argument('--Source_Dataset', type=str, default='BKAI',
-                        help='RIM_ONE_r3/REFUGE/ORIGA/ACRIMA/Drishti_GS')
+    parser.add_argument('--Source_Dataset', type=str, default='RIM_ONE_r3',
+                        help='RIM_ONE_r3/REFUGE/ORIGA/REFUGE_Valid/Drishti_GS')
 
-    parser.add_argument('--num_workers', type=int, default=0)
-    parser.add_argument('--image_size', type=int, default=256)
+    parser.add_argument('--num_workers', type=int, default=8)
+    parser.add_argument('--image_size', type=int, default=512)
 
     # Model
-    parser.add_argument('--backbone', type=str, default='resnet18', help='resnet34/resnet50')
+    parser.add_argument('--backbone', type=str, default='resnet34', help='resnet34/resnet50')
     parser.add_argument('--in_ch', type=int, default=3)
     parser.add_argument('--out_ch', type=int, default=2)
 
     # Optimizer
-    parser.add_argument('--optimizer', type=str, default='Adam', help='SGD/Adam/AdamW')
-    parser.add_argument('--lr_scheduler', type=str, default='ReduceLR',
+    parser.add_argument('--optimizer', type=str, default='SGD', help='SGD/Adam/AdamW')
+    parser.add_argument('--lr_scheduler', type=str, default='Epoch',
                         help='Cosine/Step/Epoch')   # choose the decrease strategy of lr
-    parser.add_argument('--lr', type=float, default=0.0003)
+    parser.add_argument('--lr', type=float, default=1e-3)
     parser.add_argument('--weight_decay', type=float, default=0.0005)  # weight_decay in SGD
     parser.add_argument('--momentum', type=float, default=0.99)  # momentum in SGD
     parser.add_argument('--beta1', type=float, default=0.9)  # beta1 in Adam
     parser.add_argument('--beta2', type=float, default=0.99)  # beta2 in Adam
 
     # Training
-    parser.add_argument('--num_epochs', type=int, default=2)
+    parser.add_argument('--num_epochs', type=int, default=200)
     parser.add_argument('--batch_size', type=int, default=8)
-    parser.add_argument('--save_interval', type=int, default=10)
 
     # Loss function
-    parser.add_argument('--lossmap', type=str, default=['ce'])
+    parser.add_argument('--lossmap', type=str, default=['dice', 'bce'])
 
     # Path
-    parser.add_argument('--path_save_log', type=str, default='./OPTIC/logs/')
-    parser.add_argument('--path_save_model', type=str, default='./OPTIC/models/')
-    parser.add_argument('--dataset_root', type=str, default='/lmx/data/OPTIC_CLASSIFY/Data')
+    parser.add_argument('--path_save_log', type=str, default='./logs/')
+    parser.add_argument('--path_save_model', type=str, default='./models/')
+    parser.add_argument('--dataset_root', type=str, default='/media/userdisk0/zychen/Datasets/Fundus')
 
     # Cuda (default: the first available device)
     parser.add_argument('--device', type=str, default='cuda:0')
