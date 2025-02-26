@@ -18,6 +18,9 @@ from OPTIC.networks.resnet import resnet18, resnet50
 from torchvision import utils
 import math
 from torch.nn.parallel.distributed import DistributedDataParallel as DDP
+from image_adapt.optimization.image_editor_zecon import ImageEditor
+from types import SimpleNamespace
+from image_adapt.guided_diffusion.losses import LPIPS
 
 def set_seed(seed):
     random.seed(seed)
@@ -81,10 +84,11 @@ def main():
 
     logger.log("creating the cls model")
 
-    cls_model = resnet18(pretrained=True)
+    cls_model = resnet50(pretrained=True)
     num_feats = cls_model.fc.in_features
     cls_model.fc = th.nn.Linear(num_feats, args.out_ch)
-    cls_model_path = os.path.join('/lmx/data/OPTIC_CLASSIFY/OPTIC/models', args.source_dataset, 'last-Resnet18.pth')
+    cls_model_path = os.path.join('/data1/zhangxingshuai/lms/OPTIC_CLASSIFY/Diabetic/models', args.source_dataset, 'last-Resnet50.pth')
+    #cls_model_path = os.path.join('/data1/zhangxingshuai/lms/OPTIC_CLASSIFY/Diabetic/models/aptos2019/last-Resnet50.pth')
     cls_model.load_state_dict(
         dist_util.load_state_dict(cls_model_path, map_location="cpu")
     )
@@ -102,30 +106,56 @@ def main():
     )
     cls_model.eval()
 
+    # logger.log("creating lpips loss")
+    # lpips = LPIPS(net='resnet50')
+
+    logger.log("creating the clip editor")
+    config = SimpleNamespace(
+        aug_prob=0.8,      
+        p_min=0.01,         
+        p_max=0.3,          
+        n_patch=32,         
+        batch_size=1,
+        device=dist_util.dev()      
+    )
+    
+    editor = ImageEditor(config)
+
     logger.log("creating resizers...")
     assert math.log(args.D, 2).is_integer()
 
     logger.log("loading data...")
     dataloaders = []
     for target_dataset in args.target_dataset:
-        domain1 = os.path.join(target_dataset, 'train', 'image')
-        domain2 = os.path.join(target_dataset, 'test', 'image')
-        dataloader = load_reference(
-            args.base_samples,
-            args.batch_size,
-            image_size=args.image_size,
-            class_cond=args.class_cond,
-            domain=domain1
-        )
-        dataloaders.append(dataloader)
-        dataloader = load_reference(
-            args.base_samples,
-            args.batch_size,
-            image_size=args.image_size,
-            class_cond=args.class_cond,
-            domain=domain2
-        )
-        dataloaders.append(dataloader)        
+        if target_dataset not in ['REFUGE_Valid', 'aptos2019', 'dra', 'messidor2', 'SYSU']:
+            domain1 = os.path.join(target_dataset, 'train', 'image')
+            domain2 = os.path.join(target_dataset, 'test', 'image')
+            dataloader = load_reference(
+                args.base_samples,
+                args.batch_size,
+                image_size=args.image_size,
+                class_cond=args.class_cond,
+                domain=domain1
+            )
+            dataloaders.append(dataloader)
+            dataloader = load_reference(
+                args.base_samples,
+                args.batch_size,
+                image_size=args.image_size,
+                class_cond=args.class_cond,
+                domain=domain2
+            )
+            dataloaders.append(dataloader)
+        else:
+            domain1 = os.path.join(target_dataset, 'image')
+            dataloader = load_reference(
+                args.base_samples,
+                args.batch_size,
+                image_size=args.image_size,
+                class_cond=args.class_cond,
+                domain=domain1
+            )
+            dataloaders.append(dataloader)   
 
     #assert args.num_samples >= args.batch_size * dist_util.get_world_size(), "The number of the generated samples will be larger than the specified number."
     
@@ -140,6 +170,7 @@ def main():
             model_kwargs = {k: v.to(dist_util.dev()) for k, v in model_kwargs.items()}
             sample = diffusion.p_sample_loop(
                 model,
+                editor,
                 cls_model,
                 (args.batch_size, 3, args.image_size, args.image_size),
                 clip_denoised=args.clip_denoised,
@@ -182,12 +213,13 @@ def create_argparser():
         use_ddim=False,
         base_samples="",#base data root path
         model_path="",# ckpt root path
-        save_dir="/lmx/data/OPTIC_CLASSIFY/generated",#saved data root path
+        save_dir="/data1/zhangxingshuai/lms/OPTIC_CLASSIFY/generated",#saved data root path
         save_latents=False,
-        out_ch=2,
+        out_ch=5,
         source_dataset='ACRIMA', # One of the dataset:   ['RIM_ONE_r3', 'REFUGE', 'Drishti_GS', 'ORIGA', 'ACRIMA']
         #target_dataset=['RIM_ONE_r3', 'ACRIMA'], 
-        target_dataset=['RIM_ONE_r3', 'REFUGE', 'Drishti_GS', 'ORIGA', 'ACRIMA']
+        #target_dataset=['aptos2019', 'idrid']
+        target_dataset=['aptos2019', 'messidor2', 'idrid', 'SYSU']
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()

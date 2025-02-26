@@ -1,5 +1,4 @@
 import os
-import random
 import torch
 import numpy as np
 import argparse, sys, datetime
@@ -12,29 +11,13 @@ from utils.prompt import Prompt
 from utils.metrics import calculate_metrics, calculate_cls_metrics
 from networks.resnet import resnet50, resnet18
 from torch.utils.data import DataLoader
-from dataloaders.OPTIC_dataloader import RIM_ONE_dataset, Ensemble_dataset
-from dataloaders.transform import collate_fn_wo_transform_ensemble
+from dataloaders.OPTIC_dataloader import Diabetic_dataset, Ensemble_dataset
+from dataloaders.transform import collate_fn_wo_transform
 from dataloaders.convert_csv_to_list import convert_labeled_list
 from dataloaders.normalize import normalize_image, normalize_image_to_0_1, normalize_image_to_imagenet_standards
 import ast
 
 torch.set_num_threads(1)
-
-def softmax_entropy(x: torch.Tensor) -> torch.Tensor:
-    """Entropy of softmax distribution from logits."""
-    return -(x.softmax(1) * x.log_softmax(1)).sum(1)
-
-def set_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)  # if you are using multi-GPU.
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-
-# Set the seed for reproducibility
-set_seed(42)
 
 def adjust_predictions_with_temperature_scaling(logits, temperature=1.5):
     """
@@ -81,21 +64,20 @@ class VPTTA:
         # Data Loading
         target_test_csv = []
         for target in config.Target_Dataset:
-            if target != 'REFUGE_Valid':
+            if target not in ['REFUGE_Valid', 'messidor2', 'aptos2019', 'SYSU']:
                 target_test_csv.append(target + '_train.csv')
                 target_test_csv.append(target + '_test.csv')
             else:
                 target_test_csv.append(target + '.csv')
         ts_img_list, ts_label_list = convert_labeled_list(config.dataset_root, target_test_csv)
-        generate_path = os.path.join(config.generate_root, config.Source_Dataset+'_style')
-        target_test_dataset = Ensemble_dataset(config.dataset_root, generate_path, ts_img_list, ts_label_list,
+        target_test_dataset = Diabetic_dataset(config.dataset_root, ts_img_list, ts_label_list,
                                             config.image_size, img_normalize=False)
         self.target_test_loader = DataLoader(dataset=target_test_dataset,
                                              batch_size=config.batch_size,
                                              shuffle=False,
                                              pin_memory=True,
                                              drop_last=False,
-                                             collate_fn=collate_fn_wo_transform_ensemble,
+                                             collate_fn=collate_fn_wo_transform,
                                              num_workers=config.num_workers)
 
         # Model
@@ -122,8 +104,8 @@ class VPTTA:
 
     def build_model(self):
         #self.model = ResUnet(resnet=self.backbone, num_classes=self.out_ch, pretrained=False, newBN=AdaBN, warm_n=self.warm_n).to(self.device)
-        self.model = resnet18(pretrained= False, num_classes=self.out_ch)
-        checkpoint = torch.load(os.path.join(self.load_model, 'last-Resnet18.pth'), map_location='cuda:0')
+        self.model = resnet50(pretrained= False, num_classes=self.out_ch)
+        checkpoint = torch.load(os.path.join(self.load_model, 'last-Resnet50.pth'), map_location='cuda:0')
         # self.model.to('cpu') 
         # checkpoint = torch.load(os.path.join(self.load_model, 'quantized_ResUnet.pth'))
         # fuse_model(self.model)  # Fuse Conv, BN, etc. as per your model's fusion setup
@@ -141,32 +123,27 @@ class VPTTA:
         metrics_test = [[]]
         metric_dict = ['Acc']
 
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001)
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.0005)
 
         for batch, data in enumerate(self.target_test_loader):
-            x, x_g, y = data['data'], data['g_data'], data['cls']
+            x, y = data['data'], data['cls']
             x = torch.from_numpy(normalize_image_to_imagenet_standards(x)).to(dtype=torch.float32)
-            x_g = torch.from_numpy(normalize_image_to_imagenet_standards(x_g)).to(dtype=torch.float32)
             y = torch.from_numpy(y).to(dtype=torch.long)
 
             x, y = Variable(x).to(self.device), Variable(y).to(self.device)
-            x_g = Variable(x_g).to(self.device)
             self.model.eval()
 
             with torch.no_grad():
                 x = self.quant(x)
                 pred_logit = self.model(x)
-                x_g = self.quant(x_g)
-                pred_logit_g = self.model(x_g)
-                # h_x = softmax_entropy(pred_logit)
-                # h_x_g = softmax_entropy(pred_logit_g)
-                # if(h_x_g > h_x):                
-                pred_logit = (pred_logit_g + pred_logit)/2
-                # else:                    
-                #pred_logit = pred_logit_g
+            # adjusted_probs = adjust_predictions_with_temperature_scaling(pred_logit)
 
+            # Calculate the metrics
+            #seg_output = torch.sigmoid(pred_logit)
             metrics = calculate_cls_metrics(pred_logit.detach().cpu(), y.detach().cpu())
             for i in range(len(metrics)):
+                #assert isinstance(metrics[i], list), "The metrics value is not list type."
+                #metrics_test[i] += metrics[i]
                 metrics_test[i].append(metrics[i])
 
         test_metrics_y = np.mean(metrics_test, axis=1)
@@ -174,13 +151,14 @@ class VPTTA:
         for i in range(len(test_metrics_y)):
             print_test_metric_mean[metric_dict[i]] = test_metrics_y[i]
         print("Test Metrics: ", print_test_metric_mean)
+        #print('Mean Acc:', (print_test_metric_mean['Disc_Dice'] + print_test_metric_mean['Cup_Dice']) / 2)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # Dataset
     parser.add_argument('--Source_Dataset', type=str, default='ORIGA',
-                        help='RIM_ONE_r3/REFUGE/ORIGA/ACRIMA/Drishti_GS')
+                        help='RIM_ONE_r3/REFUGE/ORIGA/REFUGE_Valid/Drishti_GS')
     parser.add_argument('--Target_Dataset', type=str)
 
     parser.add_argument('--num_workers', type=int, default=8)
@@ -189,7 +167,7 @@ if __name__ == '__main__':
     # Model
     parser.add_argument('--backbone', type=str, default='resnet50', help='resnet34/resnet50')
     parser.add_argument('--in_ch', type=int, default=3)
-    parser.add_argument('--out_ch', type=int, default=2)
+    parser.add_argument('--out_ch', type=int, default=5)
 
     # Optimizer
     parser.add_argument('--optimizer', type=str, default='Adam', help='SGD/Adam')
@@ -200,7 +178,7 @@ if __name__ == '__main__':
     parser.add_argument('--weight_decay', type=float, default=0.00)
 
     # Training
-    parser.add_argument('--batch_size', type=int, default=1)
+    parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--iters', type=int, default=1)
 
     # Hyperparameters in memory bank, prompt, and warm-up statistics

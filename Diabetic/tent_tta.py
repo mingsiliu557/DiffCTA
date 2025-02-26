@@ -1,4 +1,5 @@
 import os
+from copy import deepcopy
 import random
 import torch
 import numpy as np
@@ -12,65 +13,53 @@ from utils.prompt import Prompt
 from utils.metrics import calculate_metrics, calculate_cls_metrics
 from networks.resnet import resnet50, resnet18
 from torch.utils.data import DataLoader
-from dataloaders.OPTIC_dataloader import RIM_ONE_dataset, Ensemble_dataset
+from dataloaders.OPTIC_dataloader import OPTIC_dataset, Ensemble_dataset
 from dataloaders.transform import collate_fn_wo_transform_ensemble
 from dataloaders.convert_csv_to_list import convert_labeled_list
 from dataloaders.normalize import normalize_image, normalize_image_to_0_1, normalize_image_to_imagenet_standards
+import algorithm.tent as tent
+from torchvision.transforms import transforms
 import ast
 
 torch.set_num_threads(1)
-
-def softmax_entropy(x: torch.Tensor) -> torch.Tensor:
-    """Entropy of softmax distribution from logits."""
-    return -(x.softmax(1) * x.log_softmax(1)).sum(1)
 
 def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)  # if you are using multi-GPU.
+    torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
 # Set the seed for reproducibility
 set_seed(42)
 
-def adjust_predictions_with_temperature_scaling(logits, temperature=1.5):
-    """
-    Adjust predictions to minimize entropy using temperature scaling.
-    This method scales the logits before applying softmax, which can
-    effectively control the confidence of the predictions without distorting the distribution.
-    
-    Parameters:
-        logits (Tensor): The logits from a model's output.
-        temperature (float): The temperature factor to scale the logits. Higher values produce softer probabilities.
 
-    Returns:
-        Tensor: Adjusted probabilities that are softer, reducing the entropy of the distribution.
-    """
+brightness_change = transforms.ColorJitter(brightness=0.5)
+
+hue_change = transforms.ColorJitter(hue=0.5)
+
+contrast_change = transforms.ColorJitter(contrast=0.5)
+
+color_aug = transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5)
+
+transform = transforms.Compose([
+        brightness_change,
+        hue_change,
+        contrast_change,
+    ])
+
+
+
+
+def adjust_predictions_with_temperature_scaling(logits, temperature=1.5):
     scaled_logits = logits / temperature
     adjusted_probs = F.softmax(scaled_logits, dim=1)
     return adjusted_probs
 
-def fuse_model(model):
-    """
-    This function will traverse the model and automatically fuse Convolution and BatchNorm layers.
-    """
-    import torch.nn as nn
-    for module_name, module in model.named_children():
-        if isinstance(module, nn.Conv2d):
-            next_name, next_module = next(model.named_children())
-            if isinstance(next_module, nn.BatchNorm2d):
-                # Fuse this conv and batch norm
-                torch.quantization.fuse_modules(model, [module_name, next_name], inplace=True)
-        else:
-            # Recursively apply to sub-modules
-            fuse_model(module)
-
 class VPTTA:
     def __init__(self, config):
-        # Save Log
         time_now = datetime.datetime.now().__format__("%Y%m%d_%H%M%S_%f")
         log_root = os.path.join(config.path_save_log, 'VPTTA')
         if not os.path.exists(log_root):
@@ -78,10 +67,9 @@ class VPTTA:
         log_path = os.path.join(log_root, time_now + '.log')
         sys.stdout = Logger(log_path, sys.stdout)
 
-        # Data Loading
         target_test_csv = []
         for target in config.Target_Dataset:
-            if target != 'REFUGE_Valid':
+            if target not in ['REFUGE_Valid', 'aptos2019', 'messidor2', 'SYSU']:
                 target_test_csv.append(target + '_train.csv')
                 target_test_csv.append(target + '_test.csv')
             else:
@@ -89,7 +77,7 @@ class VPTTA:
         ts_img_list, ts_label_list = convert_labeled_list(config.dataset_root, target_test_csv)
         generate_path = os.path.join(config.generate_root, config.Source_Dataset+'_style')
         target_test_dataset = Ensemble_dataset(config.dataset_root, generate_path, ts_img_list, ts_label_list,
-                                            config.image_size, img_normalize=False)
+                                               config.image_size, img_normalize=False)
         self.target_test_loader = DataLoader(dataset=target_test_dataset,
                                              batch_size=config.batch_size,
                                              shuffle=False,
@@ -98,50 +86,33 @@ class VPTTA:
                                              collate_fn=collate_fn_wo_transform_ensemble,
                                              num_workers=config.num_workers)
 
-        # Model
-        self.load_model = os.path.join(config.model_root, str(config.Source_Dataset))  # Pre-trained Source Model
+        self.load_model = os.path.join(config.model_root, str(config.Source_Dataset))
         self.backbone = config.backbone
         self.in_ch = config.in_ch
         self.out_ch = config.out_ch
 
-        # GPU
         self.device = config.device
-        
+
         self.quant = torch.quantization.QuantStub()
 
-        # Warm-up
         self.warm_n = config.warm_n
 
-        # Initialize the pre-trained model
         self.build_model()
 
-        # Print Information
         for arg, value in vars(config).items():
             print(f"{arg}: {value}")
         print('***' * 20)
 
     def build_model(self):
-        #self.model = ResUnet(resnet=self.backbone, num_classes=self.out_ch, pretrained=False, newBN=AdaBN, warm_n=self.warm_n).to(self.device)
-        self.model = resnet18(pretrained= False, num_classes=self.out_ch)
-        checkpoint = torch.load(os.path.join(self.load_model, 'last-Resnet18.pth'), map_location='cuda:0')
-        # self.model.to('cpu') 
-        # checkpoint = torch.load(os.path.join(self.load_model, 'quantized_ResUnet.pth'))
-        # fuse_model(self.model)  # Fuse Conv, BN, etc. as per your model's fusion setup
-        # self.model.qconfig = torch.quantization.default_qconfig  # Match the config settings
-        # torch.quantization.prepare(self.model, inplace=True)
-        # torch.quantization.convert(self.model, inplace=True)
+        self.model = resnet50(pretrained=False, num_classes=self.out_ch)
+        checkpoint = torch.load(os.path.join(self.load_model, 'last-Resnet50.pth'), map_location='cuda:0')
         self.model.load_state_dict(checkpoint, strict=True)
         self.model.to(self.device)
-        # self.model.to('cuda') 
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001)
 
     def run(self):
-        #metric_dict = ['Disc_Dice', 'Disc_ASD', 'Cup_Dice', 'Cup_ASD']
-
-        # Valid on Target
         metrics_test = [[]]
         metric_dict = ['Acc']
-
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001)
 
         for batch, data in enumerate(self.target_test_loader):
             x, x_g, y = data['data'], data['g_data'], data['cls']
@@ -151,21 +122,27 @@ class VPTTA:
 
             x, y = Variable(x).to(self.device), Variable(y).to(self.device)
             x_g = Variable(x_g).to(self.device)
-            self.model.eval()
+            #x = transform(x)
+            #x_g = transform(x_g)
+            self.model = tent.configure_model(self.model)
+            params, param_names = tent.collect_params(self.model)
+            self.optimizer = torch.optim.Adam(params, lr=0.0005)
+            tented_model = tent.Tent(self.model, self.optimizer)
 
-            with torch.no_grad():
-                x = self.quant(x)
-                pred_logit = self.model(x)
-                x_g = self.quant(x_g)
-                pred_logit_g = self.model(x_g)
-                # h_x = softmax_entropy(pred_logit)
-                # h_x_g = softmax_entropy(pred_logit_g)
-                # if(h_x_g > h_x):                
-                pred_logit = (pred_logit_g + pred_logit)/2
-                # else:                    
-                #pred_logit = pred_logit_g
 
-            metrics = calculate_cls_metrics(pred_logit.detach().cpu(), y.detach().cpu())
+            #with torch.no_grad():
+            #x = self.quant(x)
+            #x_g = self.quant(x_g)
+            #x = torch.randn(1,3,256,256).to(self.device)
+            #x_g = torch.randn(1,3,256,256).to(self.device)
+            pred_logit = tented_model(x)
+                #x = torch.randn(1,3,256,256)
+            #pred_logit_g = tented_model(x_g)
+
+            final_pred_logit = pred_logit
+            #final_pred_logit =  pred_logit_g + pred_logit
+
+            metrics = calculate_cls_metrics(final_pred_logit.detach().cpu(), y.detach().cpu())
             for i in range(len(metrics)):
                 metrics_test[i].append(metrics[i])
 
@@ -175,51 +152,35 @@ class VPTTA:
             print_test_metric_mean[metric_dict[i]] = test_metrics_y[i]
         print("Test Metrics: ", print_test_metric_mean)
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    # Dataset
-    parser.add_argument('--Source_Dataset', type=str, default='ORIGA',
-                        help='RIM_ONE_r3/REFUGE/ORIGA/ACRIMA/Drishti_GS')
-    parser.add_argument('--Target_Dataset', type=str)
-
+    parser.add_argument('--Source_Dataset', type=str, default='RIM_ONE_r3', help='RIM_ONE_r3/REFUGE/ORIGA/ACRIMA/Drishti_GS')
+    parser.add_argument('--Target_Dataset', type=str, help='List of target datasets in string format')
     parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--image_size', type=int, default=256)
-
-    # Model
     parser.add_argument('--backbone', type=str, default='resnet50', help='resnet34/resnet50')
     parser.add_argument('--in_ch', type=int, default=3)
-    parser.add_argument('--out_ch', type=int, default=2)
-
-    # Optimizer
+    parser.add_argument('--out_ch', type=int, default=5)
     parser.add_argument('--optimizer', type=str, default='Adam', help='SGD/Adam')
     parser.add_argument('--lr', type=float, default=0.05)
-    parser.add_argument('--momentum', type=float, default=0.99)  # momentum in SGD
-    parser.add_argument('--beta1', type=float, default=0.9)      # beta1 in Adam
-    parser.add_argument('--beta2', type=float, default=0.99)     # beta2 in Adam.
+    parser.add_argument('--momentum', type=float, default=0.99)
+    parser.add_argument('--beta1', type=float, default=0.9)
+    parser.add_argument('--beta2', type=float, default=0.99)
     parser.add_argument('--weight_decay', type=float, default=0.00)
-
-    # Training
-    parser.add_argument('--batch_size', type=int, default=1)
+    parser.add_argument('--batch_size', type=int, default=2)
     parser.add_argument('--iters', type=int, default=1)
-
-    # Hyperparameters in memory bank, prompt, and warm-up statistics
     parser.add_argument('--memory_size', type=int, default=40)
     parser.add_argument('--neighbor', type=int, default=16)
     parser.add_argument('--prompt_alpha', type=float, default=0.01)
     parser.add_argument('--warm_n', type=int, default=5)
-
-    # Path
-    parser.add_argument('--path_save_log', type=str, default='./logs')
-    parser.add_argument('--model_root', type=str, default='./OPTIC/models')
-    parser.add_argument('--dataset_root', type=str, default='/home/lmx/VPTTA/Data')
-    parser.add_argument('--generate_root', type=str, default='/home/lmx/VPTTA/generated')
-
-    # Cuda (default: the first available device)
+    parser.add_argument('--path_save_log', type=str, default='/lmx/data/OPTIC_CLASSIFY/OPTIC/logs')
+    parser.add_argument('--model_root', type=str, default='/lmx/data/OPTIC_CLASSIFY/OPTIC/models')
+    parser.add_argument('--dataset_root', type=str, default='/lmx/data/OPTIC_CLASSIFY/Data')
+    parser.add_argument('--generate_root', type=str, default='/lmx/data/OPTIC_CLASSIFY/generated')
     parser.add_argument('--device', type=str, default='cuda:0')
 
     config = parser.parse_args()
-
+    #config.Target_Dataset = ['RIM_ONE_r3', 'REFUGE', 'Drishti_GS', 'ORIGA', 'ACRIMA
     config.Target_Dataset = ast.literal_eval(config.Target_Dataset)
     config.Target_Dataset.remove(config.Source_Dataset)
 

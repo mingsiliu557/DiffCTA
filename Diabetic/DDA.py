@@ -12,11 +12,12 @@ from utils.prompt import Prompt
 from utils.metrics import calculate_metrics, calculate_cls_metrics
 from networks.resnet import resnet50, resnet18
 from torch.utils.data import DataLoader
-from dataloaders.OPTIC_dataloader import RIM_ONE_dataset, Ensemble_dataset
+from dataloaders.OPTIC_dataloader import Diabetic_dataset, Ensemble_dataset
 from dataloaders.transform import collate_fn_wo_transform_ensemble
 from dataloaders.convert_csv_to_list import convert_labeled_list
 from dataloaders.normalize import normalize_image, normalize_image_to_0_1, normalize_image_to_imagenet_standards
 import ast
+from utils.convert import *
 
 torch.set_num_threads(1)
 
@@ -81,7 +82,7 @@ class VPTTA:
         # Data Loading
         target_test_csv = []
         for target in config.Target_Dataset:
-            if target != 'REFUGE_Valid':
+            if target not in ['REFUGE_Valid', 'aptos2019', 'messidor2', 'SYSU']:
                 target_test_csv.append(target + '_train.csv')
                 target_test_csv.append(target + '_test.csv')
             else:
@@ -122,8 +123,8 @@ class VPTTA:
 
     def build_model(self):
         #self.model = ResUnet(resnet=self.backbone, num_classes=self.out_ch, pretrained=False, newBN=AdaBN, warm_n=self.warm_n).to(self.device)
-        self.model = resnet18(pretrained= False, num_classes=self.out_ch)
-        checkpoint = torch.load(os.path.join(self.load_model, 'last-Resnet18.pth'), map_location='cuda:0')
+        self.model = resnet50(pretrained= False, num_classes=self.out_ch)
+        checkpoint = torch.load(os.path.join(self.load_model, 'last-Resnet50.pth'), map_location='cuda:0')
         # self.model.to('cpu') 
         # checkpoint = torch.load(os.path.join(self.load_model, 'quantized_ResUnet.pth'))
         # fuse_model(self.model)  # Fuse Conv, BN, etc. as per your model's fusion setup
@@ -131,6 +132,8 @@ class VPTTA:
         # torch.quantization.prepare(self.model, inplace=True)
         # torch.quantization.convert(self.model, inplace=True)
         self.model.load_state_dict(checkpoint, strict=True)
+        #self.model = convert_encoder_to_target(self.model, AdaBN, start=0, end=5, verbose=False, bottleneck=True, warm_n=config.warm_n)
+     
         self.model.to(self.device)
         # self.model.to('cuda') 
 
@@ -160,7 +163,7 @@ class VPTTA:
                 pred_logit_g = self.model(x_g)
                 # h_x = softmax_entropy(pred_logit)
                 # h_x_g = softmax_entropy(pred_logit_g)
-                # if(h_x_g > h_x):                
+                # if(h_x_g < h_x):                
                 pred_logit = (pred_logit_g + pred_logit)/2
                 # else:                    
                 #pred_logit = pred_logit_g
@@ -189,7 +192,7 @@ if __name__ == '__main__':
     # Model
     parser.add_argument('--backbone', type=str, default='resnet50', help='resnet34/resnet50')
     parser.add_argument('--in_ch', type=int, default=3)
-    parser.add_argument('--out_ch', type=int, default=2)
+    parser.add_argument('--out_ch', type=int, default=5)
 
     # Optimizer
     parser.add_argument('--optimizer', type=str, default='Adam', help='SGD/Adam')
@@ -200,7 +203,7 @@ if __name__ == '__main__':
     parser.add_argument('--weight_decay', type=float, default=0.00)
 
     # Training
-    parser.add_argument('--batch_size', type=int, default=1)
+    parser.add_argument('--batch_size', type=int, default=128)# default 32
     parser.add_argument('--iters', type=int, default=1)
 
     # Hyperparameters in memory bank, prompt, and warm-up statistics

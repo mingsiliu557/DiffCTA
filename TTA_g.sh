@@ -2,13 +2,13 @@
 
 #Please modify the following roots to yours.
 dataset_root=/data1/zhangxingshuai/lms/OPTIC_CLASSIFY/data
-model_root=/data1/zhangxingshuai/lms/OPTIC_CLASSIFY/Diabetic/models/
-path_save_log=/data1/zhangxingshuai/lms/OPTIC_CLASSIFY/Diabetic/logs/
+model_root=/data1/zhangxingshuai/lms/OPTIC_CLASSIFY/OPTIC/models/
+path_save_log=/data1/zhangxingshuai/lms/OPTIC_CLASSIFY/OPTIC/logs/
 generate_root=/data1/zhangxingshuai/lms/OPTIC_CLASSIFY/generated
 
 #Dataset [RIM_ONE_r3, REFUGE, ORIGA, ACRIMA, Drishti_GS]
-Source=SYSU
-Target_Dataset="['aptos2019','messidor2','idrid', 'SYSU']"
+Source=Drishti_GS
+Target_Dataset="['RIM_ONE_r3','REFUGE','ORIGA', 'ACRIMA', 'Drishti_GS']"
 
 #Optimizer
 optimizer=Adam
@@ -21,8 +21,8 @@ prompt_alpha=0.01
 warm_n=5
 
 #Command
-cd Diabetic
-CUDA_VISIBLE_DEVICES=4 python tent_tta.py \
+cd OPTIC
+CUDA_VISIBLE_DEVICES=4 python TTA.py \
 --dataset_root $dataset_root --model_root $model_root --path_save_log $path_save_log \
 --Source_Dataset $Source \
 --optimizer $optimizer --lr $lr \

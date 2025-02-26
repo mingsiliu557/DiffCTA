@@ -4,7 +4,7 @@
 dataset_root=/data1/zhangxingshuai/lms/OPTIC_CLASSIFY/data
 model_root=/data1/zhangxingshuai/lms/OPTIC_CLASSIFY/Diabetic/models/
 path_save_log=/data1/zhangxingshuai/lms/OPTIC_CLASSIFY/Diabetic/logs/
-generate_root=/data1/zhangxingshuai/lms/OPTIC_CLASSIFY/generated
+generate_root=/data1/zhangxingshuai/lms/OPTIC_CLASSIFY/DDA_generated
 
 #Dataset [RIM_ONE_r3, REFUGE, ORIGA, ACRIMA, Drishti_GS]
 Source=SYSU
@@ -22,7 +22,7 @@ warm_n=5
 
 #Command
 cd Diabetic
-CUDA_VISIBLE_DEVICES=4 python tent_tta.py \
+CUDA_VISIBLE_DEVICES=5 python TTA.py \
 --dataset_root $dataset_root --model_root $model_root --path_save_log $path_save_log \
 --Source_Dataset $Source \
 --optimizer $optimizer --lr $lr \

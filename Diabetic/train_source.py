@@ -9,7 +9,7 @@ from torchnet import meter
 #from networks.ResUnet import ResUnet
 from torch.utils.data import DataLoader
 from utils.metrics import calculate_metrics, calculate_cls_metrics
-from dataloaders.OPTIC_dataloader import OPTIC_dataset, RIM_ONE_dataset, Ensemble_dataset
+from dataloaders.OPTIC_dataloader import Diabetic_dataset, Ensemble_dataset
 from dataloaders.convert_csv_to_list import convert_labeled_list
 from dataloaders.normalize import normalize_image, normalize_image_to_0_1, normalize_image_to_imagenet_standards
 from dataloaders.transform import collate_fn_wo_transform, collate_fn_w_transform
@@ -47,13 +47,13 @@ class TrainSource:
 
         # Data Loading
         source_train_csv = []
-        if config.Source_Dataset != 'REFUGE_Valid':
+        if config.Source_Dataset not in ['REFUGE_Valid', 'aptos2019', 'dra', 'messidor2', 'SYSU']:
             source_train_csv.append(config.Source_Dataset + '_train.csv')
             source_train_csv.append(config.Source_Dataset + '_test.csv')
         else:
             source_train_csv.append(config.Source_Dataset + '.csv')
         sr_img_list, sr_label_list = convert_labeled_list(config.dataset_root, source_train_csv)
-        train_dataset = RIM_ONE_dataset(config.dataset_root, sr_img_list, sr_label_list,
+        train_dataset = Diabetic_dataset(config.dataset_root, sr_img_list, sr_label_list,
                                       config.image_size, img_normalize=False, batch_size=config.batch_size)
         print('Source Train Dataset: ', source_train_csv, len(train_dataset))
         self.source_train_loader = DataLoader(dataset=train_dataset,
@@ -199,8 +199,8 @@ class TrainSource:
                 best_epoch = (epoch + 1)
                 torch.save(self.model.state_dict(), self.model_path + '/' + 'pretrain-resnet50.pth')
 
-            if (epoch + 1) % config.save_interval == 0:
-                torch.save(self.model.state_dict, self.model_path + '/' + f'pretrain-resnet50_{epoch + 1}.pth')
+            if (epoch + 1) % config.save_interval == 0 :
+                torch.save(self.model.state_dict(), self.model_path + '/' + f'pretrain-resnet50_{epoch + 1}.pth')
             
 
         torch.save(self.model.state_dict(), self.model_path + '/' + 'last-Resnet50.pth')
@@ -210,8 +210,8 @@ class TrainSource:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # Dataset
-    parser.add_argument('--Source_Dataset', type=str, default='RIM_ONE_r3',
-                        help='RIM_ONE_r3/REFUGE/ORIGA/ACRIMA/Drishti_GS')
+    parser.add_argument('--Source_Dataset', type=str, default='SYSU',
+                        help='aptos2019/idrid/dra/messidor2')
 
     parser.add_argument('--num_workers', type=int, default=0)
     parser.add_argument('--image_size', type=int, default=256)
@@ -219,13 +219,13 @@ if __name__ == '__main__':
     # Model
     parser.add_argument('--backbone', type=str, default='resnet50', help='resnet34/resnet50')
     parser.add_argument('--in_ch', type=int, default=3)
-    parser.add_argument('--out_ch', type=int, default=2)
+    parser.add_argument('--out_ch', type=int, default=5)
 
     # Optimizer
     parser.add_argument('--optimizer', type=str, default='Adam', help='SGD/Adam/AdamW')
     parser.add_argument('--lr_scheduler', type=str, default='ReduceLR',
                         help='Cosine/Step/Epoch')   # choose the decrease strategy of lr
-    parser.add_argument('--lr', type=float, default=0.0003)
+    parser.add_argument('--lr', type=float, default=0.0006)
     parser.add_argument('--weight_decay', type=float, default=0.0005)  # weight_decay in SGD
     parser.add_argument('--momentum', type=float, default=0.99)  # momentum in SGD
     parser.add_argument('--beta1', type=float, default=0.9)  # beta1 in Adam
@@ -233,19 +233,19 @@ if __name__ == '__main__':
 
     # Training
     parser.add_argument('--num_epochs', type=int, default=20)
-    parser.add_argument('--batch_size', type=int, default=8)
+    parser.add_argument('--batch_size', type=int, default=32) #default 32
     parser.add_argument('--save_interval', type=int, default=1)
 
     # Loss function
     parser.add_argument('--lossmap', type=str, default=['ce'])
 
     # Path
-    parser.add_argument('--path_save_log', type=str, default='./OPTIC/logs/')
-    parser.add_argument('--path_save_model', type=str, default='./OPTIC/models/')
+    parser.add_argument('--path_save_log', type=str, default='./Diabetic/logs/')
+    parser.add_argument('--path_save_model', type=str, default='./Diabetic/models/')
     parser.add_argument('--dataset_root', type=str, default='/data1/zhangxingshuai/lms/OPTIC_CLASSIFY/data')
 
     # Cuda (default: the first available device)
-    parser.add_argument('--device', type=str, default='cuda:4')
+    parser.add_argument('--device', type=str, default='cuda:9')
 
     config = parser.parse_args()
 

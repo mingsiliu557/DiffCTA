@@ -107,8 +107,8 @@ class VPTTA:
         print('***' * 20)
 
     def build_model(self):
-        self.model = resnet18(pretrained=False, num_classes=self.out_ch)
-        checkpoint = torch.load(os.path.join(self.load_model, 'last-Resnet18.pth'))
+        self.model = resnet50(pretrained=False, num_classes=self.out_ch)
+        checkpoint = torch.load(os.path.join(self.load_model, 'last-Resnet50.pth'))
         self.model.load_state_dict(checkpoint, strict=True)
         self.model.to(self.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001)
@@ -177,7 +177,7 @@ if __name__ == '__main__':
     parser.add_argument('--beta1', type=float, default=0.9)
     parser.add_argument('--beta2', type=float, default=0.99)
     parser.add_argument('--weight_decay', type=float, default=0.00)
-    parser.add_argument('--batch_size', type=int, default=1)
+    parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--iters', type=int, default=1)
     parser.add_argument('--memory_size', type=int, default=40)
     parser.add_argument('--neighbor', type=int, default=16)
