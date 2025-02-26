@@ -20,7 +20,7 @@ Use the same environment configuration as described in the [DDA repository](http
 ---
 
 ## Data Preparation
-Prepare your dataset according to your specific requirements. For more details on the recommended structure or format, refer to the [data preparation guidelines in DDA](https://github.com/shiyegao/DDA).
+
 
 ---
 
