@@ -24,7 +24,7 @@ Comparison of DeHoCTA with existing solutions in the CTA setting: freezing sourc
 
 <div class="logo">
    <a href="https://github.com/anonymous/DiffCTA">
-      <img src="pic/arch.png" style="width: 1000px">
+      <img src="/pic/arch.png" style="width: 1000px">
    </a>
 </div>
 
