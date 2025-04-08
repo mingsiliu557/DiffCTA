@@ -18,28 +18,19 @@
 - [x] **Code will be released soon.**  ⏳
 
 
-## 📖 Overview  
-
-Comparison of DeHoCTA with existing solutions in the CTA setting: freezing source model parameters to avoid EA and CF, and achieving adaptation via lightweight DeepHook for each test image.
-
-<div class="logo">
-   <a href="https://github.com/anonymous/DiffCTA">
-      <img src="/pic/arch.png" style="width: 1000px">
-   </a>
-</div>
 
 ## 🛠️ Dependencies & Installation  
 
 ### 1️⃣ Clone the Repository  
 ```bash
-git clone git@github.com:anonymous/DeHo-CTA.git
-cd DeHo-CTA
+git clone git@github.com:anonymous/DiffCTA.git
+cd DiffCTA
 ```
 
 ### 2️⃣ Create Conda Environment & Install Dependencies  
 ```bash
-conda create -n DeHoCTA python=3.8 -y  
-conda activate DeHoCTA 
+conda create -n DiffCTA python=3.8 -y  
+conda activate DiffCTA 
 pip3 install -r requirements.txt  
 ```
 
@@ -51,17 +42,16 @@ pip3 install -r requirements.txt
 ```bash
 wget https://oneflow-static.oss-cn-beijing.aliyuncs.com/data_lx/Fundus.zip
 ```
+### Generate Adapted Image
+
+bash optic_adapt.sh
 
 ### ⚡ Quick Test 🏂  
-
-- Dual reliability estimation-based pseudo-label generation:
-```bash
-python3 generate_pseudo/generate_pseudo.py --save-visualization
 ```
 
 - Run the following command to perform a quick inference:  
 ```bash
-bash deho_cta_optic.sh
+bash TTA.sh
 ```
 
 ## 📊 Results  
@@ -90,4 +80,4 @@ The code and models are licensed under <a rel="license" href="./LICENSE">MIT Lic
 
 ## 🙌 Acknowledgement
 
-The code is inspired by [VPTTA](https://github.com/Chen-Ziyang/VPTTA), [DLTTA](https://github.com/med-air/DLTTA), and [DomainAdaptor](https://github.com/koncle/DomainAdaptor).
+The code is inspired by [VPTTA](https://github.com/Chen-Ziyang/VPTTA), [DDA](https://github.com/shiyegao/DDA)
