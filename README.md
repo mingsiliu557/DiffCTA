@@ -38,7 +38,7 @@ pip3 install -r requirements.txt
 
 ### 📂 Dataset Preparation  
 
-- Download the OD and OC segmentation dataset using the following command:
+- Download the dataset using the following command:
 ```bash
 wget https://oneflow-static.oss-cn-beijing.aliyuncs.com/data_lx/Fundus.zip
 ```
