@@ -36,9 +36,9 @@ pip3 install -r requirements.txt
 
 ## 🚀 Get Started  
 
-### 📂 Dataset Preparation  
+### 📂 Dataset and Checkpoint Preparation  
 
-- Download the dataset using the following command:
+- Download the dataset and Checkpoint using the following command:
 ```bash
 wget https://oneflow-static.oss-cn-beijing.aliyuncs.com/data_lx/Fundus.zip
 ```
